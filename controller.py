@@ -5,23 +5,23 @@ from settings import tikv_ip, tikv_port
 def set_block_cache_size(ip, port, val):
     #./tikv-ctl --host 192.168.1.151:20160 modify-tikv-config -m storage -n block_cache.capacity -v 10GB
     cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m storage -n block_cache.capacity -v "+str(val)+"GB"
+    #res=os.popen(cmd).read()
     print(cmd)
 
 def read_block_cache_size(ip, port):
     #./tikv-ctl --host 192.168.1.151:20160 metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"
-    cmd='./tikv-ctl --host '+ip+':'+port+'metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"'
+    cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"'
+    #res=os.popen(cmd).read()
     print(cmd)
 
 def read_write_throughput(ip, port):
-    cmd="./tikv-ctl --host 192.168.1.151:20160 metrics"
-    print(cmd)
-
-def read_write_throughput(ip, port):
-    cmd="./tikv-ctl --host 192.168.1.151:20160 metrics"
+    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    #res=os.popen(cmd).read()
     print(cmd)
 
 def read_write_latency(ip, port):
-    cmd="./tikv-ctl --host 192.168.1.151:20160 metrics"
+    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    #res=os.popen(cmd).read()
     print(cmd)
 
 knob_set=\
@@ -46,7 +46,7 @@ metric_set=\
         }
     }
 
-
+workload_set=["workloada"]
 
 def set_knob(knob_name, knob_val):
     func=knob_set[knob_name]["set_func"]
@@ -61,8 +61,8 @@ def read_metric(metric_name):
     func(tikv_ip, tikv_port)
 
 def run_workload(wl_type):
-    pass
+    #./bin/go-ycsb run tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
+    cmd="./bin/go-ycsb run tikv -P workloads/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    #res=os.popen(cmd).read()
+    print(cmd)
 
-set_knob("block_cache_size",555)
-read_knob("block_cache_size")
-read_metric("write_throughput")
