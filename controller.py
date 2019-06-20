@@ -62,7 +62,12 @@ def read_metric(metric_name):
 
 def run_workload(wl_type):
     #./bin/go-ycsb run tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
-    cmd="./bin/go-ycsb run tikv -P workloads/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    cmd="./bin/go-ycsb run tikv -P workloads/my/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
     #res=os.popen(cmd).read()
     print(cmd)
 
+def load_workload(wl_type):
+    #./bin/go-ycsb load tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
+    cmd="./bin/go-ycsb load tikv -P workloads/my/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    #res=os.popen(cmd).read()
+    print(cmd)
