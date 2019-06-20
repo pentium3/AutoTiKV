@@ -46,7 +46,7 @@ metric_set=\
         }
     }
 
-workload_set=["workloada"]
+workload_set=["writeheavy", "pntlookup", "longscan", "shortscan"]
 
 def set_knob(knob_name, knob_val):
     func=knob_set[knob_name]["set_func"]
@@ -62,12 +62,12 @@ def read_metric(metric_name):
 
 def run_workload(wl_type):
     #./bin/go-ycsb run tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
-    cmd="./bin/go-ycsb run tikv -P workloads/my/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    cmd="./goycsb/bin/go-ycsb run tikv -P ./ycsb_workloads/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
     #res=os.popen(cmd).read()
     print(cmd)
 
 def load_workload(wl_type):
     #./bin/go-ycsb load tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
-    cmd="./bin/go-ycsb load tikv -P workloads/my/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    cmd="./goycsb/bin/go-ycsb load tikv -P ./ycsb_workloads/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
     #res=os.popen(cmd).read()
     print(cmd)
