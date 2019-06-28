@@ -1,18 +1,67 @@
+from settings import target_metric_name, target_knob_set
+from controller import metric_set, knob_set
+import numpy as np
+
 class GPDataSet:
     #dataset for gpmodel
-    previous_knob_dataset       # correspond to mapped_workload_knob_dataset     [num of samples * num of knobs]
-    previous_metric_dataset     # correspond to mapped_workload_metric_dataset   [num of samples * num of metrics]
-                                # value of metric/knob #j in sample *i
-                                # we assume all workloads are in the same type (leave out workload mapping)
+    def __init__(self):
+        self.previous_rowlabels = None          #
+        self.previous_knob_set = None           # correspond to mapped_workload_knob_dataset     [num of samples * num of knobs]
+        self.previous_metric_set = None         # correspond to mapped_workload_metric_dataset   [num of samples * num of metrics]
+                                                # value of metric/knob #j in sample *i
+                                                # we assume all workloads are in the same type (leave out workload mapping)
 
-    new_knob                    # [num of samples * num of knobs]
-    new_metric                  # [num of samples * num of metrics]
-                                # value of metric/knob #j in sample *i
+        self.knob_labels = None
+        self.metric_labels = None
 
-    #important_knobs            # we assume all knobs are important (leave out clustering)
+        self.new_rowlabels = None
+        self.new_knob_set = None                # [num of knobs]
+        self.new_metric_set = None              # [num of metrics]
+                                                # value of metric/knob #j in sample *i
 
-    name_of_target_metric       # name of target metric
-    target_lessisbetter         # whether less value of target metric is better
+        #important_knobs                        # we assume all selected knobs are important (leave out clustering)
+
+        self.target_metric = None               # name of target metric
+        self.target_knobs = None                # name of target knobs
+        self.target_lessisbetter = None         # whether less value of target metric is better
+
+        self.num_knobs = None
+        self.num_metrics = None
+        self.num_previousamples = None
+
+    def add_new_data(self, new_knob_list, new_metric_list):
+        self.new_knob_set = new_knob_list
+        self.new_metric_set = new_metric_list
+
+    def merge_new_data(self):
+        self.previous_knob_set = np.vstack((self.previous_knob_set, self.new_knob_set))
+        self.previoud_metric_set = np.vstack((self.previous_metric_set, self.new_metric_set))
+        self.num_previousamples+=1
+
+    def initdataset(self):
+        self.num_knobs = len(knob_set.keys())
+        self.num_metrics = len(metric_set.keys())
+        self.num_previousamples = 0
+
+        self.knob_labels = np.array([x for x in knob_set.keys()])
+        self.metric_labels = np.array([x for x in metric_set.keys()])
+
+        self.previous_rowlabels = [x+1 for x in range(self.num_previousamples)]
+        self.previous_knob_set = np.zeros([self.num_previousamples, self.num_knobs])
+        self.previoud_metric_set = np.zeros([self.num_previousamples, self.num_metrics])
+
+        self.new_rowlabels = [1]
+        self.new_knob_set = np.zeros([1, self.num_knobs])
+        self.new_metric_set = np.zeros([1, self.num_metrics])
+
+        self.target_metric = target_metric_name
+        self.target_knobs = target_knob_set
+        self.target_lessisbetter = metric_set[target_metric_name]['lessisbetter']
+
+        #training knob_set = np.vstack((self.previous_knob_set, self.new_knob_set))
+        #training metric_set = np.vstack((self.previoud_metric_set, self.new_metric_set))
+        #predicting knob =
+
 
 
 

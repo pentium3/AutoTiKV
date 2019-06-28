@@ -11,7 +11,9 @@ import queue
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-# ---PIPELINE CONSTANTS---
+from controller import knob_set, MEM_MAX
+
+# -----------------PIPELINE CONSTANTS-----------------
 #  the number of samples (staring points) in gradient descent
 NUM_SAMPLES = 30
 #  the number of selected tuning knobs
@@ -25,7 +27,7 @@ INIT_FLIP_PROB = 0.3
 #  FLIP_PROB_DECAY * (probability we flip (i-1)_th categorical feature)
 FLIP_PROB_DECAY = 0.5
 
-# ---GPR CONSTANTS---
+# -----------------GPR CONSTANTS-----------------
 DEFAULT_LENGTH_SCALE = 1.0
 DEFAULT_MAGNITUDE = 1.0
 #  Max training size in GPR model
@@ -35,7 +37,7 @@ BATCH_SIZE = 3000
 # Threads for TensorFlow config
 NUM_THREADS = 4
 
-# ---GRADIENT DESCENT CONSTANTS---
+# -----------------GRADIENT DESCENT CONSTANTS-----------------
 #  the maximum iterations of gradient descent
 MAX_ITER = 500
 #  a small bias when using training data points as starting points.
@@ -48,308 +50,282 @@ DEFAULT_SIGMA_MULTIPLIER = 3.0
 DEFAULT_MU_MULTIPLIER = 1.0
 
 
-class VarType(BaseType):
-    STRING = 1
-    INTEGER = 2
-    REAL = 3
-    BOOL = 4
-    ENUM = 5
-    TIMESTAMP = 6
 
-    TYPE_NAMES = {
-        STRING: 'STRING',
-        INTEGER: 'INTEGER',
-        REAL: 'REAL',
-        BOOL: 'BOOL',
-        ENUM: 'ENUM',
-        TIMESTAMP: 'TIMESTAMP',
-    }
-
-
-class GPRResult(object):
-
-    def __init__(self, ypreds=None, sigmas=None):
-        self.ypreds = ypreds
-        self.sigmas = sigmas
-
-
-class GPRGDResult(GPRResult):
-
-    def __init__(self, ypreds=None, sigmas=None,
-                 minl=None, minl_conf=None):
-        super(GPRGDResult, self).__init__(ypreds, sigmas)
-        self.minl = minl
-        self.minl_conf = minl_conf
-
-
-class GPR(object):
-
-    def __init__(self, length_scale=1.0, magnitude=1.0, max_train_size=7000,
-                 batch_size=3000, num_threads=4, check_numerics=True, debug=False):
-        assert np.isscalar(length_scale)
-        assert np.isscalar(magnitude)
-        assert length_scale > 0 and magnitude > 0
-        self.length_scale = length_scale
-        self.magnitude = magnitude
-        self.max_train_size_ = max_train_size
-        self.batch_size_ = batch_size
-        self.num_threads_ = num_threads
-        self.check_numerics = check_numerics
-        self.debug = debug
-        self.X_train = None
-        self.y_train = None
-        self.xy_ = None
-        self.K = None
-        self.K_inv = None
-        self.graph = None
-        self.vars = None
-        self.ops = None
-
-    def build_graph(self):
-        self.vars = {}
-        self.ops = {}
-        self.graph = tf.Graph()
-        with self.graph.as_default():
-            mag_const = tf.constant(self.magnitude,
-                                    dtype=np.float32,
-                                    name='magnitude')
-            ls_const = tf.constant(self.length_scale,
-                                   dtype=np.float32,
-                                   name='length_scale')
-
-            # Nodes for distance computation
-            v1 = tf.placeholder(tf.float32, name="v1")
-            v2 = tf.placeholder(tf.float32, name="v2")
-            dist_op = tf.sqrt(tf.reduce_sum(tf.pow(tf.subtract(v1, v2), 2), 1), name='dist_op')
-            if self.check_numerics:
-                dist_op = tf.check_numerics(dist_op, "dist_op: ")
-
-            self.vars['v1_h'] = v1
-            self.vars['v2_h'] = v2
-            self.ops['dist_op'] = dist_op
-
-            # Nodes for kernel computation
-            X_dists = tf.placeholder(tf.float32, name='X_dists')
-            ridge_ph = tf.placeholder(tf.float32, name='ridge')
-            K_op = mag_const * tf.exp(-X_dists / ls_const)
-            if self.check_numerics:
-                K_op = tf.check_numerics(K_op, "K_op: ")
-            K_ridge_op = K_op + tf.diag(ridge_ph)
-            if self.check_numerics:
-                K_ridge_op = tf.check_numerics(K_ridge_op, "K_ridge_op: ")
-
-            self.vars['X_dists_h'] = X_dists
-            self.vars['ridge_h'] = ridge_ph
-            self.ops['K_op'] = K_op
-            self.ops['K_ridge_op'] = K_ridge_op
-
-            # Nodes for xy computation
-            K = tf.placeholder(tf.float32, name='K')
-            K_inv = tf.placeholder(tf.float32, name='K_inv')
-            xy_ = tf.placeholder(tf.float32, name='xy_')
-            yt_ = tf.placeholder(tf.float32, name='yt_')
-            K_inv_op = tf.matrix_inverse(K)
-            if self.check_numerics:
-                K_inv_op = tf.check_numerics(K_inv_op, "K_inv: ")
-            xy_op = tf.matmul(K_inv, yt_)
-            if self.check_numerics:
-                xy_op = tf.check_numerics(xy_op, "xy_: ")
-
-            self.vars['K_h'] = K
-            self.vars['K_inv_h'] = K_inv
-            self.vars['xy_h'] = xy_
-            self.vars['yt_h'] = yt_
-            self.ops['K_inv_op'] = K_inv_op
-            self.ops['xy_op'] = xy_op
-
-            # Nodes for yhat/sigma computation
-            K2 = tf.placeholder(tf.float32, name="K2")
-            K3 = tf.placeholder(tf.float32, name="K3")
-            yhat_ = tf.cast(tf.matmul(tf.transpose(K2), xy_), tf.float32)
-            if self.check_numerics:
-                yhat_ = tf.check_numerics(yhat_, "yhat_: ")
-            sv1 = tf.matmul(tf.transpose(K2), tf.matmul(K_inv, K2))
-            if self.check_numerics:
-                sv1 = tf.check_numerics(sv1, "sv1: ")
-            sig_val = tf.cast((tf.sqrt(tf.diag_part(K3 - sv1))), tf.float32)
-            if self.check_numerics:
-                sig_val = tf.check_numerics(sig_val, "sig_val: ")
-
-            self.vars['K2_h'] = K2
-            self.vars['K3_h'] = K3
-            self.ops['yhat_op'] = yhat_
-            self.ops['sig_op'] = sig_val
-
-            # Compute y_best (min y)
-            y_best_op = tf.cast(tf.reduce_min(yt_, 0, True), tf.float32)
-            if self.check_numerics:
-                y_best_op = tf.check_numerics(y_best_op, "y_best_op: ")
-            self.ops['y_best_op'] = y_best_op
-
-            sigma = tf.placeholder(tf.float32, name='sigma')
-            yhat = tf.placeholder(tf.float32, name='yhat')
-
-            self.vars['sigma_h'] = sigma
-            self.vars['yhat_h'] = yhat
-
-    def __repr__(self):
-        rep = ""
-        for k, v in sorted(self.__dict__.items()):
-            rep += "{} = {}\n".format(k, v)
-        return rep
-
-    def __str__(self):
-        return self.__repr__()
-
-    def check_X_y(self, X, y):
-        from sklearn.utils.validation import check_X_y
-
-        if X.shape[0] > self.max_train_size_:
-            raise Exception("X_train size cannot exceed {} ({})"
-                            .format(self.max_train_size_, X.shape[0]))
-        return check_X_y(X, y, multi_output=True,
-                         allow_nd=True, y_numeric=True,
-                         estimator="GPR")
-
-    def check_fitted(self):
-        if self.X_train is None or self.y_train is None \
-                or self.xy_ is None or self.K is None:
-            raise Exception("The model must be trained before making predictions!")
-
-    @staticmethod
-    def check_array(X):
-        from sklearn.utils.validation import check_array
-        return check_array(X, allow_nd=True, estimator="GPR")
-
-    @staticmethod
-    def check_output(X):
-        finite_els = np.isfinite(X)
-        if not np.all(finite_els):
-            raise Exception("Input contains non-finite values: {}"
-                            .format(X[~finite_els]))
-
-    def fit(self, X_train, y_train, ridge=1.0):
-        self._reset()
-        X_train, y_train = self.check_X_y(X_train, y_train)
-        self.X_train = np.float32(X_train)
-        self.y_train = np.float32(y_train)
-        sample_size = self.X_train.shape[0]
-
-        if np.isscalar(ridge):
-            ridge = np.ones(sample_size) * ridge
-        assert isinstance(ridge, np.ndarray)
-        assert ridge.ndim == 1
-
-        X_dists = np.zeros((sample_size, sample_size), dtype=np.float32)
-        with tf.Session(graph=self.graph,
-                        config=tf.ConfigProto(
-                            intra_op_parallelism_threads=self.num_threads_)) as sess:
-            dist_op = self.ops['dist_op']
-            v1, v2 = self.vars['v1_h'], self.vars['v2_h']
-            for i in range(sample_size):
-                X_dists[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i], v2: self.X_train})
-
-            K_ridge_op = self.ops['K_ridge_op']
-            X_dists_ph = self.vars['X_dists_h']
-            ridge_ph = self.vars['ridge_h']
-
-            self.K = sess.run(K_ridge_op, feed_dict={X_dists_ph: X_dists, ridge_ph: ridge})
-
-            K_ph = self.vars['K_h']
-
-            K_inv_op = self.ops['K_inv_op']
-            self.K_inv = sess.run(K_inv_op, feed_dict={K_ph: self.K})
-
-            xy_op = self.ops['xy_op']
-            K_inv_ph = self.vars['K_inv_h']
-            yt_ph = self.vars['yt_h']
-            self.xy_ = sess.run(xy_op, feed_dict={K_inv_ph: self.K_inv,
-                                                  yt_ph: self.y_train})
-        return self
-
-    def predict(self, X_test):
-        self.check_fitted()
-        X_test = np.float32(GPR.check_array(X_test))
-        test_size = X_test.shape[0]
-        sample_size = self.X_train.shape[0]
-
-        arr_offset = 0
-        yhats = np.zeros([test_size, 1])
-        sigmas = np.zeros([test_size, 1])
-        with tf.Session(graph=self.graph,
-                        config=tf.ConfigProto(
-                            intra_op_parallelism_threads=self.num_threads_)) as sess:
-            # Nodes for distance operation
-            dist_op = self.ops['dist_op']
-            v1 = self.vars['v1_h']
-            v2 = self.vars['v2_h']
-
-            # Nodes for kernel computation
-            K_op = self.ops['K_op']
-            X_dists = self.vars['X_dists_h']
-
-            # Nodes to compute yhats/sigmas
-            yhat_ = self.ops['yhat_op']
-            K_inv_ph = self.vars['K_inv_h']
-            K2 = self.vars['K2_h']
-            K3 = self.vars['K3_h']
-            xy_ph = self.vars['xy_h']
-
-            while arr_offset < test_size:
-                if arr_offset + self.batch_size_ > test_size:
-                    end_offset = test_size
-                else:
-                    end_offset = arr_offset + self.batch_size_
-
-                X_test_batch = X_test[arr_offset:end_offset]
-                batch_len = end_offset - arr_offset
-
-                dists1 = np.zeros([sample_size, batch_len])
-                for i in range(sample_size):
-                    dists1[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i],
-                                                             v2: X_test_batch})
-
-                sig_val = self.ops['sig_op']
-                K2_ = sess.run(K_op, feed_dict={X_dists: dists1})
-                yhat = sess.run(yhat_, feed_dict={K2: K2_, xy_ph: self.xy_})
-                dists2 = np.zeros([batch_len, batch_len])
-                for i in range(batch_len):
-                    dists2[i] = sess.run(dist_op, feed_dict={v1: X_test_batch[i], v2: X_test_batch})
-                K3_ = sess.run(K_op, feed_dict={X_dists: dists2})
-
-                sigma = np.zeros([1, batch_len], np.float32)
-                sigma[0] = sess.run(sig_val, feed_dict={K_inv_ph: self.K_inv, K2: K2_, K3: K3_})
-                sigma = np.transpose(sigma)
-                yhats[arr_offset: end_offset] = yhat
-                sigmas[arr_offset: end_offset] = sigma
-                arr_offset = end_offset
-        GPR.check_output(yhats)
-        GPR.check_output(sigmas)
-        return GPRResult(yhats, sigmas)
-
-    def get_params(self, deep=True):
-        return {"length_scale": self.length_scale,
-                "magnitude": self.magnitude,
-                "X_train": self.X_train,
-                "y_train": self.y_train,
-                "xy_": self.xy_,
-                "K": self.K,
-                "K_inv": self.K_inv}
-
-    def set_params(self, **parameters):
-        for param, val in list(parameters.items()):
-            setattr(self, param, val)
-        return self
-
-    def _reset(self):
-        self.X_train = None
-        self.y_train = None
-        self.xy_ = None
-        self.K = None
-        self.K_inv = None
-        self.graph = None
-        self.build_graph()
-        gc.collect()
+# class GPR(object):
+#
+#     def __init__(self, length_scale=1.0, magnitude=1.0, max_train_size=7000,
+#                  batch_size=3000, num_threads=4, check_numerics=True, debug=False):
+#         assert np.isscalar(length_scale)
+#         assert np.isscalar(magnitude)
+#         assert length_scale > 0 and magnitude > 0
+#         self.length_scale = length_scale
+#         self.magnitude = magnitude
+#         self.max_train_size_ = max_train_size
+#         self.batch_size_ = batch_size
+#         self.num_threads_ = num_threads
+#         self.check_numerics = check_numerics
+#         self.debug = debug
+#         self.X_train = None
+#         self.y_train = None
+#         self.xy_ = None
+#         self.K = None
+#         self.K_inv = None
+#         self.graph = None
+#         self.vars = None
+#         self.ops = None
+#
+#     def build_graph(self):
+#         self.vars = {}
+#         self.ops = {}
+#         self.graph = tf.Graph()
+#         with self.graph.as_default():
+#             mag_const = tf.constant(self.magnitude,
+#                                     dtype=np.float32,
+#                                     name='magnitude')
+#             ls_const = tf.constant(self.length_scale,
+#                                    dtype=np.float32,
+#                                    name='length_scale')
+#
+#             # Nodes for distance computation
+#             v1 = tf.placeholder(tf.float32, name="v1")
+#             v2 = tf.placeholder(tf.float32, name="v2")
+#             dist_op = tf.sqrt(tf.reduce_sum(tf.pow(tf.subtract(v1, v2), 2), 1), name='dist_op')
+#             if self.check_numerics:
+#                 dist_op = tf.check_numerics(dist_op, "dist_op: ")
+#
+#             self.vars['v1_h'] = v1
+#             self.vars['v2_h'] = v2
+#             self.ops['dist_op'] = dist_op
+#
+#             # Nodes for kernel computation
+#             X_dists = tf.placeholder(tf.float32, name='X_dists')
+#             ridge_ph = tf.placeholder(tf.float32, name='ridge')
+#             K_op = mag_const * tf.exp(-X_dists / ls_const)
+#             if self.check_numerics:
+#                 K_op = tf.check_numerics(K_op, "K_op: ")
+#             K_ridge_op = K_op + tf.diag(ridge_ph)
+#             if self.check_numerics:
+#                 K_ridge_op = tf.check_numerics(K_ridge_op, "K_ridge_op: ")
+#
+#             self.vars['X_dists_h'] = X_dists
+#             self.vars['ridge_h'] = ridge_ph
+#             self.ops['K_op'] = K_op
+#             self.ops['K_ridge_op'] = K_ridge_op
+#
+#             # Nodes for xy computation
+#             K = tf.placeholder(tf.float32, name='K')
+#             K_inv = tf.placeholder(tf.float32, name='K_inv')
+#             xy_ = tf.placeholder(tf.float32, name='xy_')
+#             yt_ = tf.placeholder(tf.float32, name='yt_')
+#             K_inv_op = tf.matrix_inverse(K)
+#             if self.check_numerics:
+#                 K_inv_op = tf.check_numerics(K_inv_op, "K_inv: ")
+#             xy_op = tf.matmul(K_inv, yt_)
+#             if self.check_numerics:
+#                 xy_op = tf.check_numerics(xy_op, "xy_: ")
+#
+#             self.vars['K_h'] = K
+#             self.vars['K_inv_h'] = K_inv
+#             self.vars['xy_h'] = xy_
+#             self.vars['yt_h'] = yt_
+#             self.ops['K_inv_op'] = K_inv_op
+#             self.ops['xy_op'] = xy_op
+#
+#             # Nodes for yhat/sigma computation
+#             K2 = tf.placeholder(tf.float32, name="K2")
+#             K3 = tf.placeholder(tf.float32, name="K3")
+#             yhat_ = tf.cast(tf.matmul(tf.transpose(K2), xy_), tf.float32)
+#             if self.check_numerics:
+#                 yhat_ = tf.check_numerics(yhat_, "yhat_: ")
+#             sv1 = tf.matmul(tf.transpose(K2), tf.matmul(K_inv, K2))
+#             if self.check_numerics:
+#                 sv1 = tf.check_numerics(sv1, "sv1: ")
+#             sig_val = tf.cast((tf.sqrt(tf.diag_part(K3 - sv1))), tf.float32)
+#             if self.check_numerics:
+#                 sig_val = tf.check_numerics(sig_val, "sig_val: ")
+#
+#             self.vars['K2_h'] = K2
+#             self.vars['K3_h'] = K3
+#             self.ops['yhat_op'] = yhat_
+#             self.ops['sig_op'] = sig_val
+#
+#             # Compute y_best (min y)
+#             y_best_op = tf.cast(tf.reduce_min(yt_, 0, True), tf.float32)
+#             if self.check_numerics:
+#                 y_best_op = tf.check_numerics(y_best_op, "y_best_op: ")
+#             self.ops['y_best_op'] = y_best_op
+#
+#             sigma = tf.placeholder(tf.float32, name='sigma')
+#             yhat = tf.placeholder(tf.float32, name='yhat')
+#
+#             self.vars['sigma_h'] = sigma
+#             self.vars['yhat_h'] = yhat
+#
+#     def __repr__(self):
+#         rep = ""
+#         for k, v in sorted(self.__dict__.items()):
+#             rep += "{} = {}\n".format(k, v)
+#         return rep
+#
+#     def __str__(self):
+#         return self.__repr__()
+#
+#     def check_X_y(self, X, y):
+#         from sklearn.utils.validation import check_X_y
+#
+#         if X.shape[0] > self.max_train_size_:
+#             raise Exception("X_train size cannot exceed {} ({})"
+#                             .format(self.max_train_size_, X.shape[0]))
+#         return check_X_y(X, y, multi_output=True,
+#                          allow_nd=True, y_numeric=True,
+#                          estimator="GPR")
+#
+#     def check_fitted(self):
+#         if self.X_train is None or self.y_train is None \
+#                 or self.xy_ is None or self.K is None:
+#             raise Exception("The model must be trained before making predictions!")
+#
+#     @staticmethod
+#     def check_array(X):
+#         from sklearn.utils.validation import check_array
+#         return check_array(X, allow_nd=True, estimator="GPR")
+#
+#     @staticmethod
+#     def check_output(X):
+#         finite_els = np.isfinite(X)
+#         if not np.all(finite_els):
+#             raise Exception("Input contains non-finite values: {}"
+#                             .format(X[~finite_els]))
+#
+#     def fit(self, X_train, y_train, ridge=1.0):
+#         self._reset()
+#         X_train, y_train = self.check_X_y(X_train, y_train)
+#         self.X_train = np.float32(X_train)
+#         self.y_train = np.float32(y_train)
+#         sample_size = self.X_train.shape[0]
+#
+#         if np.isscalar(ridge):
+#             ridge = np.ones(sample_size) * ridge
+#         assert isinstance(ridge, np.ndarray)
+#         assert ridge.ndim == 1
+#
+#         X_dists = np.zeros((sample_size, sample_size), dtype=np.float32)
+#         with tf.Session(graph=self.graph,
+#                         config=tf.ConfigProto(
+#                             intra_op_parallelism_threads=self.num_threads_)) as sess:
+#             dist_op = self.ops['dist_op']
+#             v1, v2 = self.vars['v1_h'], self.vars['v2_h']
+#             for i in range(sample_size):
+#                 X_dists[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i], v2: self.X_train})
+#
+#             K_ridge_op = self.ops['K_ridge_op']
+#             X_dists_ph = self.vars['X_dists_h']
+#             ridge_ph = self.vars['ridge_h']
+#
+#             self.K = sess.run(K_ridge_op, feed_dict={X_dists_ph: X_dists, ridge_ph: ridge})
+#
+#             K_ph = self.vars['K_h']
+#
+#             K_inv_op = self.ops['K_inv_op']
+#             self.K_inv = sess.run(K_inv_op, feed_dict={K_ph: self.K})
+#
+#             xy_op = self.ops['xy_op']
+#             K_inv_ph = self.vars['K_inv_h']
+#             yt_ph = self.vars['yt_h']
+#             self.xy_ = sess.run(xy_op, feed_dict={K_inv_ph: self.K_inv,
+#                                                   yt_ph: self.y_train})
+#         return self
+#
+#     def predict(self, X_test):
+#         self.check_fitted()
+#         X_test = np.float32(GPR.check_array(X_test))
+#         test_size = X_test.shape[0]
+#         sample_size = self.X_train.shape[0]
+#
+#         arr_offset = 0
+#         yhats = np.zeros([test_size, 1])
+#         sigmas = np.zeros([test_size, 1])
+#         with tf.Session(graph=self.graph,
+#                         config=tf.ConfigProto(
+#                             intra_op_parallelism_threads=self.num_threads_)) as sess:
+#             # Nodes for distance operation
+#             dist_op = self.ops['dist_op']
+#             v1 = self.vars['v1_h']
+#             v2 = self.vars['v2_h']
+#
+#             # Nodes for kernel computation
+#             K_op = self.ops['K_op']
+#             X_dists = self.vars['X_dists_h']
+#
+#             # Nodes to compute yhats/sigmas
+#             yhat_ = self.ops['yhat_op']
+#             K_inv_ph = self.vars['K_inv_h']
+#             K2 = self.vars['K2_h']
+#             K3 = self.vars['K3_h']
+#             xy_ph = self.vars['xy_h']
+#
+#             while arr_offset < test_size:
+#                 if arr_offset + self.batch_size_ > test_size:
+#                     end_offset = test_size
+#                 else:
+#                     end_offset = arr_offset + self.batch_size_
+#
+#                 X_test_batch = X_test[arr_offset:end_offset]
+#                 batch_len = end_offset - arr_offset
+#
+#                 dists1 = np.zeros([sample_size, batch_len])
+#                 for i in range(sample_size):
+#                     dists1[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i],
+#                                                              v2: X_test_batch})
+#
+#                 sig_val = self.ops['sig_op']
+#                 K2_ = sess.run(K_op, feed_dict={X_dists: dists1})
+#                 yhat = sess.run(yhat_, feed_dict={K2: K2_, xy_ph: self.xy_})
+#                 dists2 = np.zeros([batch_len, batch_len])
+#                 for i in range(batch_len):
+#                     dists2[i] = sess.run(dist_op, feed_dict={v1: X_test_batch[i], v2: X_test_batch})
+#                 K3_ = sess.run(K_op, feed_dict={X_dists: dists2})
+#
+#                 sigma = np.zeros([1, batch_len], np.float32)
+#                 sigma[0] = sess.run(sig_val, feed_dict={K_inv_ph: self.K_inv, K2: K2_, K3: K3_})
+#                 sigma = np.transpose(sigma)
+#                 yhats[arr_offset: end_offset] = yhat
+#                 sigmas[arr_offset: end_offset] = sigma
+#                 arr_offset = end_offset
+#         GPR.check_output(yhats)
+#         GPR.check_output(sigmas)
+#         return GPRResult(yhats, sigmas)
+#
+#     def get_params(self, deep=True):
+#         return {"length_scale": self.length_scale,
+#                 "magnitude": self.magnitude,
+#                 "X_train": self.X_train,
+#                 "y_train": self.y_train,
+#                 "xy_": self.xy_,
+#                 "K": self.K,
+#                 "K_inv": self.K_inv}
+#
+#     def set_params(self, **parameters):
+#         for param, val in list(parameters.items()):
+#             setattr(self, param, val)
+#         return self
+#
+#     def _reset(self):
+#         self.X_train = None
+#         self.y_train = None
+#         self.xy_ = None
+#         self.K = None
+#         self.K_inv = None
+#         self.graph = None
+#         self.build_graph()
+#         gc.collect()
+#
+#
+# class GPRResult(object):
+#
+#     def __init__(self, ypreds=None, sigmas=None):
+#         self.ypreds = ypreds
+#         self.sigmas = sigmas
 
 
 class GPRGD(GPR):
@@ -561,6 +537,15 @@ class GPRGD(GPR):
         else:
             beta = 1
         return beta
+
+
+class GPRGDResult(GPRResult):
+
+    def __init__(self, ypreds=None, sigmas=None,
+                 minl=None, minl_conf=None):
+        super(GPRGDResult, self).__init__(ypreds, sigmas)
+        self.minl = minl
+        self.minl_conf = minl_conf
 
 
 class ParamConstraintHelper(object):
@@ -777,30 +762,33 @@ def combine_duplicate_rows(X_matrix, y_matrix, rowlabels):
     return X_unique, y_unique, rowlabels_unique
 
 
-def dummy_encoder_helper(featured_knobs, dbms):
+def dummy_encoder_helper(featured_knobs):
     n_values = []
     cat_knob_indices = []
     cat_knob_names = []
     noncat_knob_names = []
     binary_knob_indices = []
-    dbms_info = DBMSCatalog.objects.filter(pk=dbms.pk)
-
-    if len(dbms_info) == 0:
-        raise Exception("DBMSCatalog cannot find dbms {}".format(dbms.full_name()))
-    full_dbms_name = dbms_info[0]
+    #dbms_info = DBMSCatalog.objects.filter(pk=dbms.pk)
+    #if len(dbms_info) == 0:
+    #    raise Exception("DBMSCatalog cannot find dbms {}".format(dbms.full_name()))
+    #full_dbms_name = dbms_info[0]
 
     for i, knob_name in enumerate(featured_knobs):
         # knob can be uniquely identified by (dbms, knob_name)
-        knobs = KnobCatalog.objects.filter(name=knob_name, dbms=dbms)
+        #knobs = KnobCatalog.objects.filter(name=knob_name, dbms=dbms)
         # __INPUT__ all knobs of current dbms
-        if len(knobs) == 0:
-            raise Exception("KnobCatalog cannot find knob of name {} in {}".format(knob_name, full_dbms_name))
-        knob = knobs[0]
+        #if len(knobs) == 0:
+        #    raise Exception("KnobCatalog cannot find knob of name {} in {}".format(knob_name, full_dbms_name))
+        #knob = knobs[0]
         # __INPUT__ type of knob value (from \ottertune\server\website\website\fixtures\postgres-96_knobs.json)
+        knob = knob_set[knob_name]
+
         # check if knob is ENUM
-        if knob.vartype == VarType.ENUM:
+        #if knob.vartype == VarType.ENUM:
+        if knob['type'] == "enum":
             # enumvals is a comma delimited list
-            enumvals = knob.enumvals.split(",")
+            #enumvals = knob.enumvals.split(",")
+            enumvals = knob['enumval']
             if len(enumvals) > 2:
                 # more than 2 values requires dummy encoding
                 n_values.append(len(enumvals))
@@ -811,7 +799,8 @@ def dummy_encoder_helper(featured_knobs, dbms):
                 noncat_knob_names.append(knob_name)
                 binary_knob_indices.append(i)
         else:
-            if knob.vartype == VarType.BOOL:
+            #if knob.vartype == VarType.BOOL:
+            if knob['type'] == 'bool':
                 binary_knob_indices.append(i)
             noncat_knob_names.append(knob_name)
 
@@ -825,39 +814,49 @@ def dummy_encoder_helper(featured_knobs, dbms):
     return categorical_info
 
 
-
 def configuration_recommendation(target_data):
-    target_data['X_matrix'] = whole_knob_dataset                         #__INPUT__ (num of samples*num of knobs)
-    target_data['y_matrix'] = whole_metric_dataset                       #__INPUT__ (num of samples*num of metrics)
-    workload_knob_data = mapped_workload_knob_dataset                    #__INPUT__
-    workload_metric_data = mapped_workload_metric_dataset                #__INPUT__
+    #target_data['X_matrix'] = previous_knob_set                         #__INPUT__ (num of samples*num of knobs)
+    #target_data['y_matrix'] = previous_metric_set                       #__INPUT__ (num of samples*num of metrics)
+    #workload_knob_data = mapped_workload_knob_dataset                   #__INPUT__
+    #workload_metric_data = mapped_workload_metric_dataset               #__INPUT__
 
-    X_workload = np.array(workload_knob_data['data'])                    #(num of mapped workloads*num of knobs)
-    X_columnlabels = np.array(workload_knob_data['columnlabels'])        #name of knobs
-    y_workload = np.array(workload_metric_data['data'])                  #(num of mapped workloads*num of knobs)
-    y_columnlabels = np.array(workload_metric_data['columnlabels'])      #name of metrics
-    rowlabels_workload = np.array(workload_metric_data['rowlabels'])
+    #X_workload = np.array(workload_knob_data['data'])                    #(num of mapped workloads*num of knobs)
+    X_workload = target_data.new_knob_set
+    #X_columnlabels = np.array(workload_knob_data['columnlabels'])        #name of knobs
+    X_columnlabels = target_data.knob_labels
+    #y_workload = np.array(workload_metric_data['data'])                  #(num of mapped workloads*num of knobs)
+    y_workload = target_data.new_metric_set
+    #y_columnlabels = np.array(workload_metric_data['columnlabels'])      #name of metrics
+    y_columnlabels = target_data.metric_labels
+    #rowlabels_workload = np.array(workload_metric_data['rowlabels'])
+    rowlabels_workload = target_data.new_rowlabels
 
     # Target workload data
-    newest_result = Result.objects.get(pk=target_data['newest_result_id'])  #__INPUT__ info about target(newest) workload
+    #newest_result = Result.objects.get(pk=target_data['newest_result_id'])  #__INPUT__ info about target(newest) workload
     #    newest_result.session.dbms = Postgres v9.6
     #    newest_result.workload.hardware.memory = memory size of current PC (GB) (Default=15.0, from 'm3.xlarge' configuration)
-    X_target = target_data['X_matrix']
-    y_target = target_data['y_matrix']
-    rowlabels_target = np.array(target_data['rowlabels'])
+
+    #X_target = target_data['X_matrix']
+    X_target = target_data.previous_knob_set
+    #y_target = target_data['y_matrix']
+    y_target = target_data.previous_metric_set
+    #rowlabels_target = np.array(target_data['rowlabels'])
+    rowlabels_target = target_data.previous_rowlabels
 
     # Filter Xs by top 10 ranked knobs
-    ranked_knobs = important_knobs              #__INPUT__ name of top IMPORTANT_KNOB_NUMBER important knobs
-    ranked_knob_idxs = important_knobs          #__INPUT__ idx of top IMPORTANT_KNOB_NUMBER important knobs
-    X_workload = X_workload[:, ranked_knob_idxs]
-    X_target = X_target[:, ranked_knob_idxs]
-    X_columnlabels = X_columnlabels[ranked_knob_idxs]
+    #ranked_knobs = important_knobs              #__INPUT__ name of top IMPORTANT_KNOB_NUMBER important knobs
+    #ranked_knob_idxs = important_knobs          #__INPUT__ idx of top IMPORTANT_KNOB_NUMBER important knobs
+    #X_workload = X_workload[:, ranked_knob_idxs]
+    #X_target = X_target[:, ranked_knob_idxs]
+    #X_columnlabels = X_columnlabels[ranked_knob_idxs]
 
     # Filter ys by current target objective metric
-    target_objective = name_of_target_metric                        #__INPUT__ only 1 target metric to be optimized
+    #target_objective = name_of_target_metric                        #__INPUT__ only 1 target metric to be optimized
+    target_objective = target_data.target_metric
     target_obj_idx = [i for i, cl in enumerate(y_columnlabels) if cl == target_objective]   #idx of target metric in y_columnlabels matrix
 
-    lessisbetter = False            #__INPUT__ True: lower metric value is better(like latency).    False: higher metric value is better(like throughput).
+    #lessisbetter = False            #__INPUT__ True: lower metric value is better(like latency).    False: higher metric value is better(like throughput).
+    lessisbetter = target_data.target_lessisbetter==1
 
     y_workload = y_workload[:, target_obj_idx]
     y_target = y_target[:, target_obj_idx]
@@ -882,7 +881,7 @@ def configuration_recommendation(target_data):
     X_matrix = np.vstack([X_target, X_workload])
 
     # Dummy encode categorial variables
-    categorical_info = DataUtil.dummy_encoder_helper(X_columnlabels, mapped_workload.dbms)      #__INPUT__
+    categorical_info = DataUtil.dummy_encoder_helper(X_columnlabels)      #__INPUT__
         #    mapped_workload.dbms = Postgres v9.6
     dummy_encoder = DummyEncoder(categorical_info['n_values'], categorical_info['categorical_features'], categorical_info['cat_columnlabels'], categorical_info['noncat_columnlabels'])
     X_matrix = dummy_encoder.fit_transform(X_matrix)
@@ -917,7 +916,11 @@ def configuration_recommendation(target_data):
             y_scaled = y_workload_scaler.fit_transform(y_target)
 
     # Set up constraint helper
-    constraint_helper = ParamConstraintHelper(scaler=X_scaler, encoder=dummy_encoder, binary_vars=categorical_info['binary_vars'], init_flip_prob=INIT_FLIP_PROB, flip_prob_decay=FLIP_PROB_DECAY)    #__INPUT__
+    constraint_helper = ParamConstraintHelper(scaler=X_scaler, 
+                                              encoder=dummy_encoder, 
+                                              binary_vars=categorical_info['binary_vars'], 
+                                              init_flip_prob=INIT_FLIP_PROB, 
+                                              flip_prob_decay=FLIP_PROB_DECAY)    #__INPUT__
 
     # FIXME (dva): check if these are good values for the ridge
     # ridge = np.empty(X_scaled.shape[0])
@@ -931,12 +934,13 @@ def configuration_recommendation(target_data):
     X_min = np.empty(X_scaled.shape[1])
     X_max = np.empty(X_scaled.shape[1])
 
-    knobs_mem = KnobCatalog.objects.filter(dbms=newest_result.session.dbms, tunable=True, resource=1)
-    knobs_mem_catalog = {k.name: k for k in knobs_mem}
+    #knobs_mem = KnobCatalog.objects.filter(dbms=newest_result.session.dbms, tunable=True, resource=1)
+    #knobs_mem_catalog = {k.name: k for k in knobs_mem}
     #    newest_result.session.dbms = Postgres v9.6
     #    __INPUT__ all knobs that are tunable and related to PC memory (from \ottertune\server\website\website\fixtures\postgres-96_knobs.json)
 
-    mem_max = newest_result.workload.hardware.memory
+    #mem_max = newest_result.workload.hardware.memory
+    #mem_max = MEM_MAX
     #    __INPUT__ newest_result.workload.hardware.memory = memory size of current PC (GB) (Default=15.0, from 'm3.xlarge' configuration)
 
     X_mem = np.zeros([1, X_scaled.shape[1]])
@@ -944,10 +948,11 @@ def configuration_recommendation(target_data):
 
     # Get default knob values
     for i, k_name in enumerate(X_columnlabels):
-        k = KnobCatalog.objects.filter(dbms=newest_result.session.dbms, name=k_name)[0]
-        X_default[i] = k.default
+        #k = KnobCatalog.objects.filter(dbms=newest_result.session.dbms, name=k_name)[0]
         #    newest_result.session.dbms = Postgres v9.6
+        #X_default[i] = k.default
         #    __INPUT__ default value of these knobs (from \ottertune\server\website\website\fixtures\postgres-96_knobs.json)
+        X_default[i] = knob_set[k_name]['default']
 
     X_default_scaled = X_scaler.transform(X_default.reshape(1, X_default.shape[0]))[0]
 
@@ -959,9 +964,10 @@ def configuration_recommendation(target_data):
         else:
             col_min = X_scaled[:, i].min()
             col_max = X_scaled[:, i].max()
-            if X_columnlabels[i] in knobs_mem_catalog:
-                X_mem[0][i] = mem_max * 1024 * 1024 * 1024  # mem_max GB
-                col_max = min(col_max, X_scaler.transform(X_mem)[0][i])
+
+            #if X_columnlabels[i] in knobs_mem_catalog:
+            #    X_mem[0][i] = mem_max * 1024 * 1024 * 1024  # mem_max GB
+            #    col_max = min(col_max, X_scaler.transform(X_mem)[0][i])
 
             # Set min value to the default value
             # FIXME: support multiple methods can be selected by users
@@ -1033,4 +1039,5 @@ def configuration_recommendation(target_data):
     conf_map_res['recommendation'] = conf_map
     conf_map_res['info'] = 'INFO: training data size is {}'.format(X_scaled.shape[0])
     return conf_map_res
+
 
