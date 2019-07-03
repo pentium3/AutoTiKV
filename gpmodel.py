@@ -10,6 +10,7 @@ import random
 import queue
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from abc import ABCMeta, abstractmethod
 
 from controller import knob_set, MEM_MAX
 
@@ -48,6 +49,30 @@ DEFAULT_LEARNING_RATE = 0.01
 DEFAULT_EPSILON = 1e-6
 DEFAULT_SIGMA_MULTIPLIER = 3.0
 DEFAULT_MU_MULTIPLIER = 1.0
+
+
+
+
+# ==========================================================
+#  Preprocessing Base Class
+# ==========================================================
+class Preprocess(object, metaclass=ABCMeta):
+
+    @abstractmethod
+    def fit(self, matrix):
+        pass
+
+    @abstractmethod
+    def transform(self, matrix, copy=True):
+        pass
+
+    def fit_transform(self, matrix, copy=True):
+        self.fit(matrix)
+        return self.transform(matrix, copy=True)
+
+    @abstractmethod
+    def inverse_transform(self, matrix, copy=True):
+        pass
 
 
 
