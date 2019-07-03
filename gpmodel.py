@@ -51,281 +51,281 @@ DEFAULT_MU_MULTIPLIER = 1.0
 
 
 
-# class GPR(object):
-#
-#     def __init__(self, length_scale=1.0, magnitude=1.0, max_train_size=7000,
-#                  batch_size=3000, num_threads=4, check_numerics=True, debug=False):
-#         assert np.isscalar(length_scale)
-#         assert np.isscalar(magnitude)
-#         assert length_scale > 0 and magnitude > 0
-#         self.length_scale = length_scale
-#         self.magnitude = magnitude
-#         self.max_train_size_ = max_train_size
-#         self.batch_size_ = batch_size
-#         self.num_threads_ = num_threads
-#         self.check_numerics = check_numerics
-#         self.debug = debug
-#         self.X_train = None
-#         self.y_train = None
-#         self.xy_ = None
-#         self.K = None
-#         self.K_inv = None
-#         self.graph = None
-#         self.vars = None
-#         self.ops = None
-#
-#     def build_graph(self):
-#         self.vars = {}
-#         self.ops = {}
-#         self.graph = tf.Graph()
-#         with self.graph.as_default():
-#             mag_const = tf.constant(self.magnitude,
-#                                     dtype=np.float32,
-#                                     name='magnitude')
-#             ls_const = tf.constant(self.length_scale,
-#                                    dtype=np.float32,
-#                                    name='length_scale')
-#
-#             # Nodes for distance computation
-#             v1 = tf.placeholder(tf.float32, name="v1")
-#             v2 = tf.placeholder(tf.float32, name="v2")
-#             dist_op = tf.sqrt(tf.reduce_sum(tf.pow(tf.subtract(v1, v2), 2), 1), name='dist_op')
-#             if self.check_numerics:
-#                 dist_op = tf.check_numerics(dist_op, "dist_op: ")
-#
-#             self.vars['v1_h'] = v1
-#             self.vars['v2_h'] = v2
-#             self.ops['dist_op'] = dist_op
-#
-#             # Nodes for kernel computation
-#             X_dists = tf.placeholder(tf.float32, name='X_dists')
-#             ridge_ph = tf.placeholder(tf.float32, name='ridge')
-#             K_op = mag_const * tf.exp(-X_dists / ls_const)
-#             if self.check_numerics:
-#                 K_op = tf.check_numerics(K_op, "K_op: ")
-#             K_ridge_op = K_op + tf.diag(ridge_ph)
-#             if self.check_numerics:
-#                 K_ridge_op = tf.check_numerics(K_ridge_op, "K_ridge_op: ")
-#
-#             self.vars['X_dists_h'] = X_dists
-#             self.vars['ridge_h'] = ridge_ph
-#             self.ops['K_op'] = K_op
-#             self.ops['K_ridge_op'] = K_ridge_op
-#
-#             # Nodes for xy computation
-#             K = tf.placeholder(tf.float32, name='K')
-#             K_inv = tf.placeholder(tf.float32, name='K_inv')
-#             xy_ = tf.placeholder(tf.float32, name='xy_')
-#             yt_ = tf.placeholder(tf.float32, name='yt_')
-#             K_inv_op = tf.matrix_inverse(K)
-#             if self.check_numerics:
-#                 K_inv_op = tf.check_numerics(K_inv_op, "K_inv: ")
-#             xy_op = tf.matmul(K_inv, yt_)
-#             if self.check_numerics:
-#                 xy_op = tf.check_numerics(xy_op, "xy_: ")
-#
-#             self.vars['K_h'] = K
-#             self.vars['K_inv_h'] = K_inv
-#             self.vars['xy_h'] = xy_
-#             self.vars['yt_h'] = yt_
-#             self.ops['K_inv_op'] = K_inv_op
-#             self.ops['xy_op'] = xy_op
-#
-#             # Nodes for yhat/sigma computation
-#             K2 = tf.placeholder(tf.float32, name="K2")
-#             K3 = tf.placeholder(tf.float32, name="K3")
-#             yhat_ = tf.cast(tf.matmul(tf.transpose(K2), xy_), tf.float32)
-#             if self.check_numerics:
-#                 yhat_ = tf.check_numerics(yhat_, "yhat_: ")
-#             sv1 = tf.matmul(tf.transpose(K2), tf.matmul(K_inv, K2))
-#             if self.check_numerics:
-#                 sv1 = tf.check_numerics(sv1, "sv1: ")
-#             sig_val = tf.cast((tf.sqrt(tf.diag_part(K3 - sv1))), tf.float32)
-#             if self.check_numerics:
-#                 sig_val = tf.check_numerics(sig_val, "sig_val: ")
-#
-#             self.vars['K2_h'] = K2
-#             self.vars['K3_h'] = K3
-#             self.ops['yhat_op'] = yhat_
-#             self.ops['sig_op'] = sig_val
-#
-#             # Compute y_best (min y)
-#             y_best_op = tf.cast(tf.reduce_min(yt_, 0, True), tf.float32)
-#             if self.check_numerics:
-#                 y_best_op = tf.check_numerics(y_best_op, "y_best_op: ")
-#             self.ops['y_best_op'] = y_best_op
-#
-#             sigma = tf.placeholder(tf.float32, name='sigma')
-#             yhat = tf.placeholder(tf.float32, name='yhat')
-#
-#             self.vars['sigma_h'] = sigma
-#             self.vars['yhat_h'] = yhat
-#
-#     def __repr__(self):
-#         rep = ""
-#         for k, v in sorted(self.__dict__.items()):
-#             rep += "{} = {}\n".format(k, v)
-#         return rep
-#
-#     def __str__(self):
-#         return self.__repr__()
-#
-#     def check_X_y(self, X, y):
-#         from sklearn.utils.validation import check_X_y
-#
-#         if X.shape[0] > self.max_train_size_:
-#             raise Exception("X_train size cannot exceed {} ({})"
-#                             .format(self.max_train_size_, X.shape[0]))
-#         return check_X_y(X, y, multi_output=True,
-#                          allow_nd=True, y_numeric=True,
-#                          estimator="GPR")
-#
-#     def check_fitted(self):
-#         if self.X_train is None or self.y_train is None \
-#                 or self.xy_ is None or self.K is None:
-#             raise Exception("The model must be trained before making predictions!")
-#
-#     @staticmethod
-#     def check_array(X):
-#         from sklearn.utils.validation import check_array
-#         return check_array(X, allow_nd=True, estimator="GPR")
-#
-#     @staticmethod
-#     def check_output(X):
-#         finite_els = np.isfinite(X)
-#         if not np.all(finite_els):
-#             raise Exception("Input contains non-finite values: {}"
-#                             .format(X[~finite_els]))
-#
-#     def fit(self, X_train, y_train, ridge=1.0):
-#         self._reset()
-#         X_train, y_train = self.check_X_y(X_train, y_train)
-#         self.X_train = np.float32(X_train)
-#         self.y_train = np.float32(y_train)
-#         sample_size = self.X_train.shape[0]
-#
-#         if np.isscalar(ridge):
-#             ridge = np.ones(sample_size) * ridge
-#         assert isinstance(ridge, np.ndarray)
-#         assert ridge.ndim == 1
-#
-#         X_dists = np.zeros((sample_size, sample_size), dtype=np.float32)
-#         with tf.Session(graph=self.graph,
-#                         config=tf.ConfigProto(
-#                             intra_op_parallelism_threads=self.num_threads_)) as sess:
-#             dist_op = self.ops['dist_op']
-#             v1, v2 = self.vars['v1_h'], self.vars['v2_h']
-#             for i in range(sample_size):
-#                 X_dists[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i], v2: self.X_train})
-#
-#             K_ridge_op = self.ops['K_ridge_op']
-#             X_dists_ph = self.vars['X_dists_h']
-#             ridge_ph = self.vars['ridge_h']
-#
-#             self.K = sess.run(K_ridge_op, feed_dict={X_dists_ph: X_dists, ridge_ph: ridge})
-#
-#             K_ph = self.vars['K_h']
-#
-#             K_inv_op = self.ops['K_inv_op']
-#             self.K_inv = sess.run(K_inv_op, feed_dict={K_ph: self.K})
-#
-#             xy_op = self.ops['xy_op']
-#             K_inv_ph = self.vars['K_inv_h']
-#             yt_ph = self.vars['yt_h']
-#             self.xy_ = sess.run(xy_op, feed_dict={K_inv_ph: self.K_inv,
-#                                                   yt_ph: self.y_train})
-#         return self
-#
-#     def predict(self, X_test):
-#         self.check_fitted()
-#         X_test = np.float32(GPR.check_array(X_test))
-#         test_size = X_test.shape[0]
-#         sample_size = self.X_train.shape[0]
-#
-#         arr_offset = 0
-#         yhats = np.zeros([test_size, 1])
-#         sigmas = np.zeros([test_size, 1])
-#         with tf.Session(graph=self.graph,
-#                         config=tf.ConfigProto(
-#                             intra_op_parallelism_threads=self.num_threads_)) as sess:
-#             # Nodes for distance operation
-#             dist_op = self.ops['dist_op']
-#             v1 = self.vars['v1_h']
-#             v2 = self.vars['v2_h']
-#
-#             # Nodes for kernel computation
-#             K_op = self.ops['K_op']
-#             X_dists = self.vars['X_dists_h']
-#
-#             # Nodes to compute yhats/sigmas
-#             yhat_ = self.ops['yhat_op']
-#             K_inv_ph = self.vars['K_inv_h']
-#             K2 = self.vars['K2_h']
-#             K3 = self.vars['K3_h']
-#             xy_ph = self.vars['xy_h']
-#
-#             while arr_offset < test_size:
-#                 if arr_offset + self.batch_size_ > test_size:
-#                     end_offset = test_size
-#                 else:
-#                     end_offset = arr_offset + self.batch_size_
-#
-#                 X_test_batch = X_test[arr_offset:end_offset]
-#                 batch_len = end_offset - arr_offset
-#
-#                 dists1 = np.zeros([sample_size, batch_len])
-#                 for i in range(sample_size):
-#                     dists1[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i],
-#                                                              v2: X_test_batch})
-#
-#                 sig_val = self.ops['sig_op']
-#                 K2_ = sess.run(K_op, feed_dict={X_dists: dists1})
-#                 yhat = sess.run(yhat_, feed_dict={K2: K2_, xy_ph: self.xy_})
-#                 dists2 = np.zeros([batch_len, batch_len])
-#                 for i in range(batch_len):
-#                     dists2[i] = sess.run(dist_op, feed_dict={v1: X_test_batch[i], v2: X_test_batch})
-#                 K3_ = sess.run(K_op, feed_dict={X_dists: dists2})
-#
-#                 sigma = np.zeros([1, batch_len], np.float32)
-#                 sigma[0] = sess.run(sig_val, feed_dict={K_inv_ph: self.K_inv, K2: K2_, K3: K3_})
-#                 sigma = np.transpose(sigma)
-#                 yhats[arr_offset: end_offset] = yhat
-#                 sigmas[arr_offset: end_offset] = sigma
-#                 arr_offset = end_offset
-#         GPR.check_output(yhats)
-#         GPR.check_output(sigmas)
-#         return GPRResult(yhats, sigmas)
-#
-#     def get_params(self, deep=True):
-#         return {"length_scale": self.length_scale,
-#                 "magnitude": self.magnitude,
-#                 "X_train": self.X_train,
-#                 "y_train": self.y_train,
-#                 "xy_": self.xy_,
-#                 "K": self.K,
-#                 "K_inv": self.K_inv}
-#
-#     def set_params(self, **parameters):
-#         for param, val in list(parameters.items()):
-#             setattr(self, param, val)
-#         return self
-#
-#     def _reset(self):
-#         self.X_train = None
-#         self.y_train = None
-#         self.xy_ = None
-#         self.K = None
-#         self.K_inv = None
-#         self.graph = None
-#         self.build_graph()
-#         gc.collect()
-#
-#
-# class GPRResult(object):
-#
-#     def __init__(self, ypreds=None, sigmas=None):
-#         self.ypreds = ypreds
-#         self.sigmas = sigmas
+class GPR(object):
+
+    def __init__(self, length_scale=1.0, magnitude=1.0, max_train_size=7000,
+                 batch_size=3000, num_threads=4, check_numerics=True, debug=False):
+        assert np.isscalar(length_scale)
+        assert np.isscalar(magnitude)
+        assert length_scale > 0 and magnitude > 0
+        self.length_scale = length_scale
+        self.magnitude = magnitude
+        self.max_train_size_ = max_train_size
+        self.batch_size_ = batch_size
+        self.num_threads_ = num_threads
+        self.check_numerics = check_numerics
+        self.debug = debug
+        self.X_train = None
+        self.y_train = None
+        self.xy_ = None
+        self.K = None
+        self.K_inv = None
+        self.graph = None
+        self.vars = None
+        self.ops = None
+
+    def build_graph(self):
+        self.vars = {}
+        self.ops = {}
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            mag_const = tf.constant(self.magnitude,
+                                    dtype=np.float32,
+                                    name='magnitude')
+            ls_const = tf.constant(self.length_scale,
+                                   dtype=np.float32,
+                                   name='length_scale')
+
+            # Nodes for distance computation
+            v1 = tf.placeholder(tf.float32, name="v1")
+            v2 = tf.placeholder(tf.float32, name="v2")
+            dist_op = tf.sqrt(tf.reduce_sum(tf.pow(tf.subtract(v1, v2), 2), 1), name='dist_op')
+            if self.check_numerics:
+                dist_op = tf.check_numerics(dist_op, "dist_op: ")
+
+            self.vars['v1_h'] = v1
+            self.vars['v2_h'] = v2
+            self.ops['dist_op'] = dist_op
+
+            # Nodes for kernel computation
+            X_dists = tf.placeholder(tf.float32, name='X_dists')
+            ridge_ph = tf.placeholder(tf.float32, name='ridge')
+            K_op = mag_const * tf.exp(-X_dists / ls_const)
+            if self.check_numerics:
+                K_op = tf.check_numerics(K_op, "K_op: ")
+            K_ridge_op = K_op + tf.diag(ridge_ph)
+            if self.check_numerics:
+                K_ridge_op = tf.check_numerics(K_ridge_op, "K_ridge_op: ")
+
+            self.vars['X_dists_h'] = X_dists
+            self.vars['ridge_h'] = ridge_ph
+            self.ops['K_op'] = K_op
+            self.ops['K_ridge_op'] = K_ridge_op
+
+            # Nodes for xy computation
+            K = tf.placeholder(tf.float32, name='K')
+            K_inv = tf.placeholder(tf.float32, name='K_inv')
+            xy_ = tf.placeholder(tf.float32, name='xy_')
+            yt_ = tf.placeholder(tf.float32, name='yt_')
+            K_inv_op = tf.matrix_inverse(K)
+            if self.check_numerics:
+                K_inv_op = tf.check_numerics(K_inv_op, "K_inv: ")
+            xy_op = tf.matmul(K_inv, yt_)
+            if self.check_numerics:
+                xy_op = tf.check_numerics(xy_op, "xy_: ")
+
+            self.vars['K_h'] = K
+            self.vars['K_inv_h'] = K_inv
+            self.vars['xy_h'] = xy_
+            self.vars['yt_h'] = yt_
+            self.ops['K_inv_op'] = K_inv_op
+            self.ops['xy_op'] = xy_op
+
+            # Nodes for yhat/sigma computation
+            K2 = tf.placeholder(tf.float32, name="K2")
+            K3 = tf.placeholder(tf.float32, name="K3")
+            yhat_ = tf.cast(tf.matmul(tf.transpose(K2), xy_), tf.float32)
+            if self.check_numerics:
+                yhat_ = tf.check_numerics(yhat_, "yhat_: ")
+            sv1 = tf.matmul(tf.transpose(K2), tf.matmul(K_inv, K2))
+            if self.check_numerics:
+                sv1 = tf.check_numerics(sv1, "sv1: ")
+            sig_val = tf.cast((tf.sqrt(tf.diag_part(K3 - sv1))), tf.float32)
+            if self.check_numerics:
+                sig_val = tf.check_numerics(sig_val, "sig_val: ")
+
+            self.vars['K2_h'] = K2
+            self.vars['K3_h'] = K3
+            self.ops['yhat_op'] = yhat_
+            self.ops['sig_op'] = sig_val
+
+            # Compute y_best (min y)
+            y_best_op = tf.cast(tf.reduce_min(yt_, 0, True), tf.float32)
+            if self.check_numerics:
+                y_best_op = tf.check_numerics(y_best_op, "y_best_op: ")
+            self.ops['y_best_op'] = y_best_op
+
+            sigma = tf.placeholder(tf.float32, name='sigma')
+            yhat = tf.placeholder(tf.float32, name='yhat')
+
+            self.vars['sigma_h'] = sigma
+            self.vars['yhat_h'] = yhat
+
+    def __repr__(self):
+        rep = ""
+        for k, v in sorted(self.__dict__.items()):
+            rep += "{} = {}\n".format(k, v)
+        return rep
+
+    def __str__(self):
+        return self.__repr__()
+
+    def check_X_y(self, X, y):
+        from sklearn.utils.validation import check_X_y
+
+        if X.shape[0] > self.max_train_size_:
+            raise Exception("X_train size cannot exceed {} ({})"
+                            .format(self.max_train_size_, X.shape[0]))
+        return check_X_y(X, y, multi_output=True,
+                         allow_nd=True, y_numeric=True,
+                         estimator="GPR")
+
+    def check_fitted(self):
+        if self.X_train is None or self.y_train is None \
+                or self.xy_ is None or self.K is None:
+            raise Exception("The model must be trained before making predictions!")
+
+    @staticmethod
+    def check_array(X):
+        from sklearn.utils.validation import check_array
+        return check_array(X, allow_nd=True, estimator="GPR")
+
+    @staticmethod
+    def check_output(X):
+        finite_els = np.isfinite(X)
+        if not np.all(finite_els):
+            raise Exception("Input contains non-finite values: {}"
+                            .format(X[~finite_els]))
+
+    def fit(self, X_train, y_train, ridge=1.0):
+        self._reset()
+        X_train, y_train = self.check_X_y(X_train, y_train)
+        self.X_train = np.float32(X_train)
+        self.y_train = np.float32(y_train)
+        sample_size = self.X_train.shape[0]
+
+        if np.isscalar(ridge):
+            ridge = np.ones(sample_size) * ridge
+        assert isinstance(ridge, np.ndarray)
+        assert ridge.ndim == 1
+
+        X_dists = np.zeros((sample_size, sample_size), dtype=np.float32)
+        with tf.Session(graph=self.graph,
+                        config=tf.ConfigProto(
+                            intra_op_parallelism_threads=self.num_threads_)) as sess:
+            dist_op = self.ops['dist_op']
+            v1, v2 = self.vars['v1_h'], self.vars['v2_h']
+            for i in range(sample_size):
+                X_dists[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i], v2: self.X_train})
+
+            K_ridge_op = self.ops['K_ridge_op']
+            X_dists_ph = self.vars['X_dists_h']
+            ridge_ph = self.vars['ridge_h']
+
+            self.K = sess.run(K_ridge_op, feed_dict={X_dists_ph: X_dists, ridge_ph: ridge})
+
+            K_ph = self.vars['K_h']
+
+            K_inv_op = self.ops['K_inv_op']
+            self.K_inv = sess.run(K_inv_op, feed_dict={K_ph: self.K})
+
+            xy_op = self.ops['xy_op']
+            K_inv_ph = self.vars['K_inv_h']
+            yt_ph = self.vars['yt_h']
+            self.xy_ = sess.run(xy_op, feed_dict={K_inv_ph: self.K_inv,
+                                                  yt_ph: self.y_train})
+        return self
+
+    def predict(self, X_test):
+        self.check_fitted()
+        X_test = np.float32(GPR.check_array(X_test))
+        test_size = X_test.shape[0]
+        sample_size = self.X_train.shape[0]
+
+        arr_offset = 0
+        yhats = np.zeros([test_size, 1])
+        sigmas = np.zeros([test_size, 1])
+        with tf.Session(graph=self.graph,
+                        config=tf.ConfigProto(
+                            intra_op_parallelism_threads=self.num_threads_)) as sess:
+            # Nodes for distance operation
+            dist_op = self.ops['dist_op']
+            v1 = self.vars['v1_h']
+            v2 = self.vars['v2_h']
+
+            # Nodes for kernel computation
+            K_op = self.ops['K_op']
+            X_dists = self.vars['X_dists_h']
+
+            # Nodes to compute yhats/sigmas
+            yhat_ = self.ops['yhat_op']
+            K_inv_ph = self.vars['K_inv_h']
+            K2 = self.vars['K2_h']
+            K3 = self.vars['K3_h']
+            xy_ph = self.vars['xy_h']
+
+            while arr_offset < test_size:
+                if arr_offset + self.batch_size_ > test_size:
+                    end_offset = test_size
+                else:
+                    end_offset = arr_offset + self.batch_size_
+
+                X_test_batch = X_test[arr_offset:end_offset]
+                batch_len = end_offset - arr_offset
+
+                dists1 = np.zeros([sample_size, batch_len])
+                for i in range(sample_size):
+                    dists1[i] = sess.run(dist_op, feed_dict={v1: self.X_train[i],
+                                                             v2: X_test_batch})
+
+                sig_val = self.ops['sig_op']
+                K2_ = sess.run(K_op, feed_dict={X_dists: dists1})
+                yhat = sess.run(yhat_, feed_dict={K2: K2_, xy_ph: self.xy_})
+                dists2 = np.zeros([batch_len, batch_len])
+                for i in range(batch_len):
+                    dists2[i] = sess.run(dist_op, feed_dict={v1: X_test_batch[i], v2: X_test_batch})
+                K3_ = sess.run(K_op, feed_dict={X_dists: dists2})
+
+                sigma = np.zeros([1, batch_len], np.float32)
+                sigma[0] = sess.run(sig_val, feed_dict={K_inv_ph: self.K_inv, K2: K2_, K3: K3_})
+                sigma = np.transpose(sigma)
+                yhats[arr_offset: end_offset] = yhat
+                sigmas[arr_offset: end_offset] = sigma
+                arr_offset = end_offset
+        GPR.check_output(yhats)
+        GPR.check_output(sigmas)
+        return GPRResult(yhats, sigmas)
+
+    def get_params(self, deep=True):
+        return {"length_scale": self.length_scale,
+                "magnitude": self.magnitude,
+                "X_train": self.X_train,
+                "y_train": self.y_train,
+                "xy_": self.xy_,
+                "K": self.K,
+                "K_inv": self.K_inv}
+
+    def set_params(self, **parameters):
+        for param, val in list(parameters.items()):
+            setattr(self, param, val)
+        return self
+
+    def _reset(self):
+        self.X_train = None
+        self.y_train = None
+        self.xy_ = None
+        self.K = None
+        self.K_inv = None
+        self.graph = None
+        self.build_graph()
+        gc.collect()
+
+
+class GPRResult(object):
+
+    def __init__(self, ypreds=None, sigmas=None):
+        self.ypreds = ypreds
+        self.sigmas = sigmas
 
 
 class GPRGD(GPR):
