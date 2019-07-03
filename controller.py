@@ -17,6 +17,7 @@ def read_block_cache_size(ip, port):
     #./tikv-ctl --host 192.168.1.151:20160 metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"'
     res=os.popen(cmd).read()
+    res=int(res.split(' ')[1])
     res=int(res/1024/1024)                          # in MB
     return(res)
 

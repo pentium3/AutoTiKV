@@ -2,6 +2,7 @@ from controller import read_metric, read_knob, set_knob, metric_set, knob_set, i
 from gpmodel import configuration_recommendation
 from datamodel import GPDataSet
 from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, workload_set
+import numpy as np
 
 
 if __name__ == '__main__':
