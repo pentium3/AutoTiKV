@@ -25,13 +25,15 @@ if __name__ == '__main__':
         load_workload("writeheavy")
         run_workload("writeheavy")
 
-        for i,x in enumerate(metric_set.keys):
+        for i,x in enumerate(metric_set.keys()):
             new_metric_after[0][i] = read_metric(x)
         new_metric = new_metric_after - new_metric_before
 
         ds.add_new_data(new_knob_set, new_metric)
 
         rec = configuration_recommendation(ds)
+
+        ds.merge_new_data()
 
         rec=rec['recommendation']
         for x in rec.keys():

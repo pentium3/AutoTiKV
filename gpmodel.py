@@ -839,7 +839,39 @@ def dummy_encoder_helper(featured_knobs):
     return categorical_info
 
 
+def gen_random_data(knobset):
+    random_knob_result = {}
+    for name in knobset.keys():
+        vartype = knobset[name]['type']
+        if vartype == 'bool':
+            flag = random.randint(0, 1)
+            if flag == 0:
+                random_knob_result[name] = False
+            else:
+                random_knob_result[name] = True
+        elif vartype == 'enum':
+            enumvals = knobset[name]['enumval']
+            enumvals_len = len(enumvals)
+            rand_idx = random.randint(0, enumvals_len - 1)
+            random_knob_result[name] = rand_idx
+        elif vartype == 'int':
+            minval=knobset[name]['minval']
+            maxval=knobset[name]['maxval']
+            random_knob_result[name] = random.randint(int(minval), int(maxval))
+        elif vartype == 'real':
+            minval=knobset[name]['minval']
+            maxval=knobset[name]['maxval']
+            random_knob_result[name] = random.uniform(float(minval), float(maxval))
+        # elif vartype == STRING:
+        #     random_knob_result[name] = "None"
+        # elif vartype == TIMESTAMP:
+        #     random_knob_result[name] = "None"
+    return random_knob_result
+
+
 def configuration_recommendation(target_data):
+    if(target_data.num_previousamples==0):
+        return gen_random_data(target_data.knob_labels)
     #target_data['X_matrix'] = previous_knob_set                         #__INPUT__ (num of samples*num of knobs)
     #target_data['y_matrix'] = previous_metric_set                       #__INPUT__ (num of samples*num of metrics)
     #workload_knob_data = mapped_workload_knob_dataset                   #__INPUT__
@@ -1059,10 +1091,10 @@ def configuration_recommendation(target_data):
     best_config = np.maximum(best_config, X_min_inv)
 
     conf_map = {k: best_config[i] for i, k in enumerate(X_columnlabels)}
-    conf_map_res = {}
-    conf_map_res['status'] = 'good'
-    conf_map_res['recommendation'] = conf_map
-    conf_map_res['info'] = 'INFO: training data size is {}'.format(X_scaled.shape[0])
-    return conf_map_res
+    # conf_map_res = {}
+    # conf_map_res['status'] = 'good'
+    # conf_map_res['recommendation'] = conf_map
+    # conf_map_res['info'] = 'INFO: training data size is {}'.format(X_scaled.shape[0])
+    return conf_map
 
 

@@ -1,6 +1,6 @@
 import sys
 import os
-from settings import tikv_ip, tikv_port
+from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port
 import psutil
 
 MEM_MAX = psutil.virtual_memory().total
@@ -189,13 +189,15 @@ metric_set=\
 #------------------workload controller------------------
 
 def run_workload(wl_type):
-    #./bin/go-ycsb run tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
-    cmd="./goycsb/bin/go-ycsb run tikv -P ./ycsb_workloads/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    #./go-ycsb run tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
+    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
+    print(cmd)
     res=os.popen(cmd).read()
 
 def load_workload(wl_type):
-    #./bin/go-ycsb load tikv -P workloads/workloada -p tikv.pd=192.168.1.150:2379
-    cmd="./goycsb/bin/go-ycsb load tikv -P ./ycsb_workloads/"+wl_type+" -p tikv.pd="+tikv_ip+':'+tikv_port
+    #./go-ycsb load tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
+    cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
+    print(cmd)
     res=os.popen(cmd).read()
 
 
