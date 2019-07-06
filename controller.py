@@ -3,7 +3,9 @@ import os
 from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port
 import psutil
 
-MEM_MAX = psutil.virtual_memory().total
+#MEM_MAX = psutil.virtual_memory().total
+MEM_MAX = 15*1024*1024*1024                 # memory size of tikv node, not current PC
+
 
 #------------------knob controller------------------
 
