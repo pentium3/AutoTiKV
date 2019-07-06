@@ -938,7 +938,7 @@ def configuration_recommendation(target_data):
     X_matrix = np.vstack([X_target, X_workload])
 
     # Dummy encode categorial variables
-    categorical_info = DataUtil.dummy_encoder_helper(X_columnlabels)      #__INPUT__
+    categorical_info = dummy_encoder_helper(X_columnlabels)      #__INPUT__
         #    mapped_workload.dbms = Postgres v9.6
     dummy_encoder = DummyEncoder(categorical_info['n_values'], categorical_info['categorical_features'], categorical_info['cat_columnlabels'], categorical_info['noncat_columnlabels'])
     X_matrix = dummy_encoder.fit_transform(X_matrix)

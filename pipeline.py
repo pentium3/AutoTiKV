@@ -8,7 +8,7 @@ import numpy as np
 if __name__ == '__main__':
     ds = GPDataSet()
     ds.initdataset()
-    Round=5
+    Round=10
     init_knobs()
     while(Round>0):
         num_knobs = len(knob_set.keys())
@@ -40,5 +40,7 @@ if __name__ == '__main__':
         for x in rec.keys():
             set_knob(x, rec[x])
 
+        print("Round: ", Round, rec)
         Round-=1
 
+    ds.printdata()
