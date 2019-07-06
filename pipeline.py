@@ -35,7 +35,8 @@ if __name__ == '__main__':
 
         ds.merge_new_data()
 
-        rec=rec['recommendation']
+        #rec=rec['recommendation']
+
         for x in rec.keys():
             set_knob(x, rec[x])
 

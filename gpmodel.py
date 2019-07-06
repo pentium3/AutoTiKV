@@ -839,10 +839,10 @@ def dummy_encoder_helper(featured_knobs):
     return categorical_info
 
 
-def gen_random_data(knobset):
+def gen_random_data(target_data):
     random_knob_result = {}
-    for name in knobset.keys():
-        vartype = knobset[name]['type']
+    for name in target_data.knob_labels:
+        vartype = knob_set[name]['type']
         if vartype == 'bool':
             flag = random.randint(0, 1)
             if flag == 0:
@@ -850,17 +850,17 @@ def gen_random_data(knobset):
             else:
                 random_knob_result[name] = True
         elif vartype == 'enum':
-            enumvals = knobset[name]['enumval']
+            enumvals = knob_set[name]['enumval']
             enumvals_len = len(enumvals)
             rand_idx = random.randint(0, enumvals_len - 1)
             random_knob_result[name] = rand_idx
         elif vartype == 'int':
-            minval=knobset[name]['minval']
-            maxval=knobset[name]['maxval']
+            minval=knob_set[name]['minval']
+            maxval=knob_set[name]['maxval']
             random_knob_result[name] = random.randint(int(minval), int(maxval))
         elif vartype == 'real':
-            minval=knobset[name]['minval']
-            maxval=knobset[name]['maxval']
+            minval=knob_set[name]['minval']
+            maxval=knob_set[name]['maxval']
             random_knob_result[name] = random.uniform(float(minval), float(maxval))
         # elif vartype == STRING:
         #     random_knob_result[name] = "None"
@@ -871,7 +871,7 @@ def gen_random_data(knobset):
 
 def configuration_recommendation(target_data):
     if(target_data.num_previousamples==0):
-        return gen_random_data(target_data.knob_labels)
+        return gen_random_data(target_data)
     #target_data['X_matrix'] = previous_knob_set                         #__INPUT__ (num of samples*num of knobs)
     #target_data['y_matrix'] = previous_metric_set                       #__INPUT__ (num of samples*num of metrics)
     #workload_knob_data = mapped_workload_knob_dataset                   #__INPUT__

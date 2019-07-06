@@ -34,8 +34,8 @@ class GPDataSet:
         self.new_metric_set = new_metric_list
 
     def merge_new_data(self):
+        self.previous_metric_set = np.vstack((self.previous_metric_set, self.new_metric_set))
         self.previous_knob_set = np.vstack((self.previous_knob_set, self.new_knob_set))
-        self.previoud_metric_set = np.vstack((self.previous_metric_set, self.new_metric_set))
         self.num_previousamples+=1
 
     def initdataset(self):
@@ -48,7 +48,7 @@ class GPDataSet:
 
         self.previous_rowlabels = [x+1 for x in range(self.num_previousamples)]
         self.previous_knob_set = np.zeros([self.num_previousamples, self.num_knobs])
-        self.previoud_metric_set = np.zeros([self.num_previousamples, self.num_metrics])
+        self.previous_metric_set = np.zeros([self.num_previousamples, self.num_metrics])
 
         self.new_rowlabels = [1]
         self.new_knob_set = np.zeros([1, self.num_knobs])
@@ -59,10 +59,29 @@ class GPDataSet:
         self.target_lessisbetter = metric_set[target_metric_name]['lessisbetter']
 
         #training knob_set = np.vstack((self.previous_knob_set, self.new_knob_set))
-        #training metric_set = np.vstack((self.previoud_metric_set, self.new_metric_set))
+        #training metric_set = np.vstack((self.previous_metric_set, self.new_metric_set))
         #predicting knob =
 
-
+    def printdata(self):
+        print("--------------------previous:--------------------")
+        print("knobs:  ", self.previous_knob_set)
+        print("metrics:  ", self.previous_metric_set)
+        print("rowlabels:  ", self.previous_rowlabels)
+        print("num:  ", self.num_previousamples)
+        print("--------------------new:--------------------")
+        print("knobs:  ", self.new_knob_set)
+        print("metrics:  ", self.new_metric_set)
+        print("rowlabels:  ", self.new_rowlabels)
+        print("--------------------TARGET:--------------------")
+        print("knob:  ", self.target_knobs)
+        print("metric:  ", self.target_metric)
+        print("metric_lessisbetter:  ", self.target_lessisbetter)
+        print("----------------------------------------")
+        print("num of knobs == ", self.num_knobs)
+        print("knobs:  ", self.knob_labels)
+        print("num of metrics == ", self.num_metrics)
+        print("metrics:  ", self.metric_labels)
+        print("----------------------------------------")
 
 
 
