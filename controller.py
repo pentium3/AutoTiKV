@@ -2,6 +2,7 @@ import sys
 import os
 from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port
 import psutil
+import numpy as np
 
 #MEM_MAX = psutil.virtual_memory().total
 MEM_MAX = 15*1024*1024*1024                 # memory size of tikv node, not current PC
@@ -148,41 +149,49 @@ metric_set=\
          {
          "read_func": read_write_throughput,
          "lessisbetter": 0,                   # whether less value of this metric is better(1: yes)
+         "calc": "inc",                       #incremental
          },
     "write_latency":
         {
          "read_func": read_write_latency,
          "lessisbetter": 1,                    # whether less value of this metric is better(1: yes)
+         "calc": "inc",                        #incremental
         },
     "get_throughput":
         {
          "read_func": read_get_throughput,
          "lessisbetter": 0,                   # whether less value of this metric is better(1: yes)
+         "calc": "inc",                       #incremental
         },
     "get_latency":
         {
          "read_func": read_get_latency,
          "lessisbetter": 1,                   # whether less value of this metric is better(1: yes)
+         "calc": "inc",                       #incremental
         },
     "scan_throughput":
         {
          "read_func": read_scan_throughput,
          "lessisbetter": 0,                   # whether less value of this metric is better(1: yes)
+         "calc": "inc",                       #incremental
         },
     "scan_latency":
         {
          "read_func": read_scan_latency,
          "lessisbetter": 1,                   # whether less value of this metric is better(1: yes)
+         "calc": "inc",                       #incremental
         },
     "store_size":
         {
          "read_func": read_store_size,
          "lessisbetter": 1,                   # whether less value of this metric is better(1: yes)
+         "calc": "ins",                       #instant
         },
     "compaction_cpu":
         {
          "read_func": read_compaction_cpu,
          "lessisbetter": 1,                   # whether less value of this metric is better(1: yes)
+         "calc": "inc",                       #incremental
         },
 
     }
@@ -225,5 +234,14 @@ def init_knobs():
     knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
     knob_set["block_cache_size"]["default"]=512                          # a sample
 
+def calc_metric(metric_after, metric_before, metric_set):
+    num_metrics = len(metric_set.keys())
+    new_metric = np.zeros([1, num_metrics])
+    for i, x in enumerate(metric_set.keys()):
+        if(metric_set[x]["calc"]=="inc"):
+            new_metric[0][i]=metric_after[0][i]-metric_before[0][i]
+        elif(metric_set[x]["calc"]=="ins"):
+            new_metric[0][i]=metric_after[0][i]
+    return(new_metric)
 
 

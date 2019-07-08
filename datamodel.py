@@ -63,25 +63,25 @@ class GPDataSet:
         #predicting knob =
 
     def printdata(self):
-        print("--------------------previous:--------------------")
+        print("------------------------------previous:------------------------------")
         print("knobs:  ", self.previous_knob_set)
         print("metrics:  ", self.previous_metric_set)
         print("rowlabels:  ", self.previous_rowlabels)
         print("num:  ", self.num_previousamples)
-        print("--------------------new:--------------------")
+        print("------------------------------new:------------------------------")
         print("knobs:  ", self.new_knob_set)
         print("metrics:  ", self.new_metric_set)
         print("rowlabels:  ", self.new_rowlabels)
-        print("--------------------TARGET:--------------------")
+        print("------------------------------TARGET:------------------------------")
         print("knob:  ", self.target_knobs)
         print("metric:  ", self.target_metric)
         print("metric_lessisbetter:  ", self.target_lessisbetter)
-        print("----------------------------------------")
+        print("------------------------------------------------------------")
         print("num of knobs == ", self.num_knobs)
         print("knobs:  ", self.knob_labels)
         print("num of metrics == ", self.num_metrics)
         print("metrics:  ", self.metric_labels)
-        print("----------------------------------------")
+        print("------------------------------------------------------------")
 
 
 

@@ -776,7 +776,9 @@ def combine_duplicate_rows(X_matrix, y_matrix, rowlabels):
     y_unique = np.empty((num_unique, y_matrix.shape[1]))
     rowlabels_unique = np.empty(num_unique, dtype=tuple)
     ix = np.arange(X_matrix.shape[0])
+    #print(ix, invs)
     for i, count in enumerate(cts):
+        #print(i, cts)
         if count == 1:
             y_unique[i, :] = y_matrix[idxs[i], :]
             rowlabels_unique[i] = (rowlabels[idxs[i]],)
@@ -870,7 +872,7 @@ def gen_random_data(target_data):
 
 
 def configuration_recommendation(target_data):
-    if(target_data.num_previousamples==0):                               # TODO: Could give random recommendation on several rounds at first, rather than only the first one round.
+    if(target_data.num_previousamples<10):                               # TODO: Could give random recommendation on several rounds at first, rather than only the first one round.
         return gen_random_data(target_data)
     #target_data['X_matrix'] = previous_knob_set                         #__INPUT__ (num of samples*num of knobs)
     #target_data['y_matrix'] = previous_metric_set                       #__INPUT__ (num of samples*num of metrics)
@@ -1072,6 +1074,9 @@ def configuration_recommendation(target_data):
                   sigma_multiplier=DEFAULT_SIGMA_MULTIPLIER,
                   mu_multiplier=DEFAULT_MU_MULTIPLIER)
     model.fit(X_scaled, y_scaled, X_min, X_max, ridge=DEFAULT_RIDGE)
+    print("train:::::::: ", X_scaled.shape, X_scaled, type(X_scaled[0][0]))
+    print("train:::::::: ", y_scaled.shape, y_scaled, type(y_scaled[0][0]))
+    print("predict:::::::: ", X_samples.shape, X_samples, type(X_samples[0][0]))
     res = model.predict(X_samples, constraint_helper=constraint_helper)
 
     best_config_idx = np.argmin(res.minl.ravel())
