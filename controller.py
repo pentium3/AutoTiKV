@@ -52,6 +52,7 @@ def read_write_throughput(ip, port):
     return(ans0)
 
 def read_write_latency(ip, port):
+    return(0)           # FOR DEBUG ONLY. latency is instant and could be read from go-ycsb. No need to read in this function
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
     res=os.popen(cmd).read()
     reslist=res.split("\n")
@@ -83,6 +84,7 @@ def read_get_throughput(ip, port):
     return(ans0)
 
 def read_get_latency(ip, port):
+    return(0)           # FOR DEBUG ONLY. latency is instant and could be read from go-ycsb. No need to read in this function
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
     res=os.popen(cmd).read()
     reslist=res.split("\n")
@@ -108,6 +110,7 @@ def read_scan_throughput(ip, port):
     return(ans0)
 
 def read_scan_latency(ip, port):
+    return(0)           # FOR DEBUG ONLY. latency is instant and could be read from go-ycsb. No need to read in this function
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
     res=os.popen(cmd).read()
     reslist=res.split("\n")
@@ -155,7 +158,7 @@ metric_set=\
         {
          "read_func": read_write_latency,
          "lessisbetter": 1,                    # whether less value of this metric is better(1: yes)
-         "calc": "inc",                        #incremental
+         "calc": "ins",                       #instant
         },
     "get_throughput":
         {
@@ -167,7 +170,7 @@ metric_set=\
         {
          "read_func": read_get_latency,
          "lessisbetter": 1,                   # whether less value of this metric is better(1: yes)
-         "calc": "inc",                       #incremental
+         "calc": "ins",                       #instant
         },
     "scan_throughput":
         {
@@ -179,7 +182,7 @@ metric_set=\
         {
          "read_func": read_scan_latency,
          "lessisbetter": 1,                   # whether less value of this metric is better(1: yes)
-         "calc": "inc",                       #incremental
+         "calc": "ins",                       #instant
         },
     "store_size":
         {
@@ -204,12 +207,14 @@ def run_workload(wl_type):
     cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
     print(cmd)
     res=os.popen(cmd).read()
+    return(res)
 
 def load_workload(wl_type):
     #./go-ycsb load tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
     cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
     print(cmd)
     res=os.popen(cmd).read()
+    return(res)
 
 
 #------------------common functions------------------
@@ -224,7 +229,31 @@ def read_knob(knob_name):
     res=func(tikv_ip, tikv_port)
     return res
 
-def read_metric(metric_name):
+def read_metric(metric_name, rres=None):
+    if(rres!=None):
+        rl=rres.split('\n')
+        rl.reverse()
+        if(metric_name=="write_latency"):
+            i=0
+            while((not rl[i].startswith('UPDATE ')) and (not rl[i].startswith('INSERT '))):
+                i+=1
+            dat=rl[i][rl[i].find("Avg(us):") + 9:].split(",")[0]
+            dat=int(dat)
+            return(dat)
+        elif(metric_name=="get_latency"):
+            i=0
+            while(not rl[i].startswith('READ ')):
+                i+=1
+            dat=rl[i][rl[i].find("Avg(us):") + 9:].split(",")[0]
+            dat=int(dat)
+            return(dat)
+        elif(metric_name=="scan_latency"):
+            i=0
+            while(not rl[i].startswith('SCAN ')):
+                i+=1
+            dat=rl[i][rl[i].find("Avg(us):") + 9:].split(",")[0]
+            dat=int(dat)
+            return(dat)
     func=metric_set[metric_name]["read_func"]
     res=func(tikv_ip, tikv_port)
     return res
@@ -234,10 +263,10 @@ def init_knobs():
     knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
     knob_set["block_cache_size"]["default"]=512                          # a sample
 
-def calc_metric(metric_after, metric_before, metric_set):
-    num_metrics = len(metric_set.keys())
+def calc_metric(metric_after, metric_before, metric_list):
+    num_metrics = len(metric_list)
     new_metric = np.zeros([1, num_metrics])
-    for i, x in enumerate(metric_set.keys()):
+    for i, x in enumerate(metric_list):
         if(metric_set[x]["calc"]=="inc"):
             new_metric[0][i]=metric_after[0][i]-metric_before[0][i]
         elif(metric_set[x]["calc"]=="ins"):

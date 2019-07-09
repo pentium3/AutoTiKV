@@ -38,13 +38,13 @@ class GPDataSet:
         self.previous_knob_set = np.vstack((self.previous_knob_set, self.new_knob_set))
         self.num_previousamples+=1
 
-    def initdataset(self):
+    def initdataset(self, metric_list):
         self.num_knobs = len(knob_set.keys())
-        self.num_metrics = len(metric_set.keys())
+        self.num_metrics = len(metric_list)
         self.num_previousamples = 0
 
         self.knob_labels = np.array([x for x in knob_set.keys()])
-        self.metric_labels = np.array([x for x in metric_set.keys()])
+        self.metric_labels = np.array([x for x in metric_list])
 
         self.previous_rowlabels = [x+1 for x in range(self.num_previousamples)]
         self.previous_knob_set = np.zeros([self.num_previousamples, self.num_knobs])
