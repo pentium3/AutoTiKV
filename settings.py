@@ -6,7 +6,7 @@ ycsb_port="2379"
 
 
 # target metric
-target_metric_name="write_throughput"
+target_metric_name="write_latency"
 
 # knobs to be tuned
 target_knob_set=["block_cache_size"]
