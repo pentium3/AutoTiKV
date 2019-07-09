@@ -6,7 +6,7 @@ ycsb_port="2379"
 
 
 # target metric
-target_metric_name="write_latency"
+target_metric_name="get_latency"
 
 # knobs to be tuned
 target_knob_set=["block_cache_size"]
@@ -21,4 +21,4 @@ wl_metrics={
     "shortscan": ["write_throughput","write_latency","scan_throughput","scan_latency","store_size","compaction_cpu"],        #SCAN, INSERT
 }
 
-wltype = "longscan"
+wltype = "pntlookup"
