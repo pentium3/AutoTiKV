@@ -5,7 +5,7 @@ import psutil
 import numpy as np
 
 #MEM_MAX = psutil.virtual_memory().total
-MEM_MAX = 15*1024*1024*1024                 # memory size of tikv node, not current PC
+MEM_MAX = 7.8*1024*1024*1024                 # memory size of tikv node, not current PC
 
 
 #------------------knob controller------------------
