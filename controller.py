@@ -5,7 +5,7 @@ import psutil
 import numpy as np
 
 #MEM_MAX = psutil.virtual_memory().total
-MEM_MAX = 7.8*1024*1024*1024                 # memory size of tikv node, not current PC
+MEM_MAX = 30*1024*1024*1024                 # memory size of tikv node, not current PC
 
 
 #------------------knob controller------------------
@@ -204,14 +204,14 @@ metric_set=\
 
 def run_workload(wl_type):
     #./go-ycsb run tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
-    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
+    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads 12"
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
 
 def load_workload(wl_type):
     #./go-ycsb load tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
-    cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
+    cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads 12"
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
