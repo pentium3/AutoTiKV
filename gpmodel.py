@@ -1074,6 +1074,8 @@ def configuration_recommendation(target_data):
                   sigma_multiplier=DEFAULT_SIGMA_MULTIPLIER,
                   mu_multiplier=DEFAULT_MU_MULTIPLIER)
     model.fit(X_scaled, y_scaled, X_min, X_max, ridge=DEFAULT_RIDGE)
+    print("constrains_min::::::::", X_min)
+    print("constrains_max::::::::", X_max)
     print("train:::::::: ", X_scaled.shape, X_scaled, type(X_scaled[0][0]))
     print("train:::::::: ", y_scaled.shape, y_scaled, type(y_scaled[0][0]))
     print("predict:::::::: ", X_samples.shape, X_samples, type(X_samples[0][0]))

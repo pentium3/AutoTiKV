@@ -260,8 +260,11 @@ def read_metric(metric_name, rres=None):
 
 def init_knobs():
     # if there are knobs whose range is related to PC memory size, initialize them here
-    knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
-    knob_set["block_cache_size"]["default"]=512                          # a sample
+    #knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
+    #knob_set["block_cache_size"]["default"]=512                          # a sample
+    knob_set["block_cache_size"]["maxval"] = 1024
+    knob_set["block_cache_size"]["minval"] = 8
+    knob_set["block_cache_size"]["default"]=512
 
 def calc_metric(metric_after, metric_before, metric_list):
     num_metrics = len(metric_list)
