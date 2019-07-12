@@ -24,7 +24,7 @@
 # 1MB
 
 recordcount=1000
-operationcount=1000
+operationcount=500000
 workload=core
 
 readallfields=true

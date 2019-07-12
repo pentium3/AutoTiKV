@@ -203,14 +203,14 @@ metric_set=\
 #------------------workload controller------------------
 
 def run_workload(wl_type):
-    #./go-ycsb run tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
+    #./go-ycsb run tikv -P ./workloads/smallpntlookup -p tikv.pd=192.168.1.130:2379
     cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
 
 def load_workload(wl_type):
-    #./go-ycsb load tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
+    #./go-ycsb load tikv -P ./workloads/smallpntlookup -p tikv.pd=192.168.1.130:2379
     cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
     print(cmd)
     res=os.popen(cmd).read()
