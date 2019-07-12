@@ -204,14 +204,14 @@ metric_set=\
 
 def run_workload(wl_type):
     #./go-ycsb run tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
-    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads 12"
+    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
 
 def load_workload(wl_type):
     #./go-ycsb load tikv -P ./workloads/writeheavy -p tikv.pd=192.168.1.150:2379
-    cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads 12"
+    cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
@@ -260,11 +260,10 @@ def read_metric(metric_name, rres=None):
 
 def init_knobs():
     # if there are knobs whose range is related to PC memory size, initialize them here
-    knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
+    #knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
     knob_set["block_cache_size"]["default"]=512                          # a sample
-    #knob_set["block_cache_size"]["maxval"] = 1024
+    knob_set["block_cache_size"]["maxval"] = 1024
     knob_set["block_cache_size"]["minval"] = 8
-    #knob_set["block_cache_size"]["default"]=512
 
 def calc_metric(metric_after, metric_before, metric_list):
     num_metrics = len(metric_list)

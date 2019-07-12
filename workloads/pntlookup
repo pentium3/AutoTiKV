@@ -1,4 +1,4 @@
-# Copyright (c) 2010 Yahoo! Inc. All rights reserved.                                                                                                                             
+# Copyright (c) 2010 Yahoo! Inc. All rights reserved.
 #                                                                                                                                                                                 
 # Licensed under the Apache License, Version 2.0 (the "License"); you                                                                                                             
 # may not use this file except in compliance with the License. You                                                                                                                
@@ -20,6 +20,8 @@
 #   Read/update ratio: 100/0
 #   Default data size: 1 KB records (10 fields, 100 bytes each, plus key)
 #   Request distribution: zipfian
+
+# 80GB
 
 recordcount=80000000
 operationcount=200000
