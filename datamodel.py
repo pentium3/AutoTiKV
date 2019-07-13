@@ -87,10 +87,12 @@ class GPDataSet:
         print("################## data ##################")
 
     def dat2xls(self):
+        print("################## data ##################")
         for i in range(self.num_previousamples):
             print(float(self.previous_knob_set[i]), end=', ')
             for j in (self.previous_metric_set[i]):
                 print(float(j), end=', ')
             print("")
+        print("################## data ##################")
 
 
