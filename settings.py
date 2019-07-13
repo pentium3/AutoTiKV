@@ -12,7 +12,7 @@ target_metric_name="get_latency"
 target_knob_set=["block_cache_size"]
 
 # workloads to be run
-workload_set=["writeheavy", "pntlookup", "longscan", "shortscan", "smallpntlookup"]
+# workload_set=["writeheavy", "pntlookup", "longscan", "shortscan", "smallpntlookup"]
 
 wl_metrics={
     "writeheavy":["write_throughput","write_latency","store_size","compaction_cpu"],        #UPDATE
@@ -22,4 +22,4 @@ wl_metrics={
     "smallpntlookup": ["get_throughput","get_latency","store_size","compaction_cpu"],        #READ
 }
 
-wltype = "smallpntlookup"
+wltype = "pntlookup"

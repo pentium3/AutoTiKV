@@ -1,7 +1,7 @@
 from controller import read_metric, read_knob, set_knob, knob_set, init_knobs, load_workload, run_workload, calc_metric
 from gpmodel import configuration_recommendation
 from datamodel import GPDataSet
-from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, workload_set, wl_metrics, wltype
+from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, wl_metrics, wltype
 import numpy as np
 import time
 
@@ -14,7 +14,8 @@ if __name__ == '__main__':
     num_knobs = len(knob_set.keys())
     num_metrics = len(metric_list)
 
-    lres = load_workload(wltype)
+    #lres = load_workload(wltype)
+    #print(lres)
 
     while(Round>0):
         print("################## start a new Round ##################")
@@ -36,7 +37,7 @@ if __name__ == '__main__':
             new_knob_set[0][i] = read_knob(x)
 
         rres = run_workload(wltype)
-        #print(rres)
+        print(rres)
 
         for i,x in enumerate(metric_list):
             new_metric_after[0][i] = read_metric(x, rres)

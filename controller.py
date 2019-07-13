@@ -5,7 +5,7 @@ import psutil
 import numpy as np
 
 #MEM_MAX = psutil.virtual_memory().total
-MEM_MAX = 30*1024*1024*1024                 # memory size of tikv node, not current PC
+MEM_MAX = 31*1024*1024*1024                 # memory size of tikv node, not current PC
 
 
 #------------------knob controller------------------
@@ -260,9 +260,9 @@ def read_metric(metric_name, rres=None):
 
 def init_knobs():
     # if there are knobs whose range is related to PC memory size, initialize them here
-    #knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
+    knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
     knob_set["block_cache_size"]["default"]=512                          # a sample
-    knob_set["block_cache_size"]["maxval"] = 1024
+    #knob_set["block_cache_size"]["maxval"] = 1024
     knob_set["block_cache_size"]["minval"] = 8
 
 def calc_metric(metric_after, metric_before, metric_list):
