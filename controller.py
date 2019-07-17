@@ -5,19 +5,19 @@ import psutil
 import numpy as np
 
 #MEM_MAX = psutil.virtual_memory().total
-MEM_MAX = 31*1024*1024*1024                 # memory size of tikv node, not current PC
+MEM_MAX = 0.8*32*1024*1024*1024                 # memory size of tikv node, not current PC
 
 
 #------------------knob controller------------------
 
 def set_block_cache_size(ip, port, val):
-    #./tikv-ctl --host 192.168.1.151:20160 modify-tikv-config -m storage -n block_cache.capacity -v 3072MB
+    #./tikv-ctl --host 192.168.1.104:20160 modify-tikv-config -m storage -n block_cache.capacity -v 3072MB
     cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m storage -n block_cache.capacity -v "+str(val)+"MB"
     res=os.popen(cmd).read()                        # will return "success"
     return(res)
 
 def read_block_cache_size(ip, port):
-    #./tikv-ctl --host 192.168.1.151:20160 metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"
+    #./tikv-ctl --host 192.168.1.104:20160 metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}\''
     res=os.popen(cmd).read()
     res=int(res.split(' ')[1])
