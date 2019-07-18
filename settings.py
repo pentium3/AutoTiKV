@@ -1,7 +1,7 @@
 #info about tikv
 tikv_ip="192.168.1.104"
 tikv_port="20160"
-tikv_pd_ip="192.168.1.130"
+tikv_pd_ip="192.168.1.104"
 ycsb_port="2379"
 
 
