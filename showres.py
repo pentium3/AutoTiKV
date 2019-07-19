@@ -1,3 +1,4 @@
+import os
 
 def showres(FL, OUTNAME):
     from datamodel import GPDataSet
@@ -27,3 +28,25 @@ def showres(FL, OUTNAME):
         ff.close()
     fo.close()
 
+if __name__=='__main__':
+    KEYdict={}
+    for maindir, subdir, file_name_list in os.walk('.'):
+        for filename in file_name_list:
+            lf=os.path.join(maindir, filename)
+            if(lf.endswith('.pkl')):
+                _lf=lf.split("_")
+                KEY=_lf[1]
+                Round=int(_lf[2])
+                CurrentRound=KEYdict.get(KEY, -1)
+                if(CurrentRound==-1 or Round<CurrentRound):
+                    KEYdict[KEY] = Round
+                    
+
+    totlist=[]
+    for _k in KEYdict:
+        fl='ds_'+_k+"_"+str(KEYdict[_k])+'_'
+        showres([fl+'.pkl'], fl+'.txt')
+        totlist.append(fl+'.pkl')
+
+    print(totlist)
+    showres(totlist, 'allres.txt')

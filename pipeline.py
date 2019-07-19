@@ -7,7 +7,7 @@ import time
 
 if __name__ == '__main__':
     ds = GPDataSet()
-    Round=50
+    Round=100
     init_knobs()
     metric_list=wl_metrics[wltype]
     ds.initdataset(metric_list)
@@ -17,9 +17,9 @@ if __name__ == '__main__':
     #lres = load_workload(wltype)
     #print(lres)
 
+    KEY = str(time.time())
     while(Round>0):
         print("################## start a new Round ##################")
-        KEY=str(time.time())
         rec = configuration_recommendation(ds)
         for x in rec.keys():
             set_knob(x, rec[x])
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         ds.add_new_data(new_knob_set, new_metric)
 
         import pickle
-        fp = "ds_"+KEY+"_"+str(Round)+".pkl"
+        fp = "ds_"+KEY+"_"+str(Round)+"_.pkl"
         with open(fp, "wb") as f:
             pickle.dump(ds, f)
 
