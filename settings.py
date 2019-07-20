@@ -22,4 +22,4 @@ wl_metrics={
     "smallpntlookup": ["get_throughput","get_latency","store_size","compaction_cpu"],        #READ
 }
 
-wltype = "pntlookup80"
+wltype = "pntlookup40"

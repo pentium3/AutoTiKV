@@ -45,8 +45,8 @@ if __name__=='__main__':
     totlist=[]
     for _k in KEYdict:
         fl='ds_'+_k+"_"+str(KEYdict[_k])+'_'
-        showres([fl+'.pkl'], fl+'.txt')
+        showres([fl+'.pkl'], 'res_'+fl+'.txt')
         totlist.append(fl+'.pkl')
 
     print(totlist)
-    showres(totlist, 'allres.txt')
+    showres(totlist, 'res_all.txt')
