@@ -52,25 +52,25 @@ def read_write_throughput(ip, port):
     return(ans0)
 
 def read_write_latency(ip, port):
-    return(0)           # FOR DEBUG ONLY. latency is instant and could be read from go-ycsb. No need to read in this function
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    res=os.popen(cmd).read()
-    reslist=res.split("\n")
-    ans1=0
-    ans2=1
-    ans3=0
-    ans4=1
-    for rl in reslist:
-        if ('tikv_grpc_msg_duration_seconds_sum{type="kv_prewrite"}' in rl):
-            ans1 = float(rl.split(' ')[1])
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_prewrite"}' in rl):
-            ans2 = float(rl.split(' ')[1])
-        if ('tikv_grpc_msg_duration_seconds_sum{type="kv_commit"}' in rl):
-            ans3 = float(rl.split(' ')[1])
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_commit"}' in rl):
-            ans4 = float(rl.split(' ')[1])
-    ans=(ans1/ans2)+(ans3/ans4)
-    return(ans)
+    return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
+    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    # res=os.popen(cmd).read()
+    # reslist=res.split("\n")
+    # ans1=0
+    # ans2=1
+    # ans3=0
+    # ans4=1
+    # for rl in reslist:
+    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_prewrite"}' in rl):
+    #         ans1 = float(rl.split(' ')[1])
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_prewrite"}' in rl):
+    #         ans2 = float(rl.split(' ')[1])
+    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_commit"}' in rl):
+    #         ans3 = float(rl.split(' ')[1])
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_commit"}' in rl):
+    #         ans4 = float(rl.split(' ')[1])
+    # ans=(ans1/ans2)+(ans3/ans4)
+    # return(ans)
 
 def read_get_throughput(ip, port):
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
@@ -84,19 +84,19 @@ def read_get_throughput(ip, port):
     return(ans0)
 
 def read_get_latency(ip, port):
-    return(0)           # FOR DEBUG ONLY. latency is instant and could be read from go-ycsb. No need to read in this function
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    res=os.popen(cmd).read()
-    reslist=res.split("\n")
-    ans1=0
-    ans2=1
-    for rl in reslist:
-        if ('tikv_grpc_msg_duration_seconds_sum{type="kv_batch_get"}' in rl):
-            ans1 = float(rl.split(' ')[1])
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_batch_get"}' in rl):
-            ans2 = float(rl.split(' ')[1])
-    ans=ans1/ans2
-    return(ans)
+    return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
+    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    # res=os.popen(cmd).read()
+    # reslist=res.split("\n")
+    # ans1=0
+    # ans2=1
+    # for rl in reslist:
+    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_batch_get"}' in rl):
+    #         ans1 = float(rl.split(' ')[1])
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_batch_get"}' in rl):
+    #         ans2 = float(rl.split(' ')[1])
+    # ans=ans1/ans2
+    # return(ans)
 
 def read_scan_throughput(ip, port):
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
@@ -110,19 +110,19 @@ def read_scan_throughput(ip, port):
     return(ans0)
 
 def read_scan_latency(ip, port):
-    return(0)           # FOR DEBUG ONLY. latency is instant and could be read from go-ycsb. No need to read in this function
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    res=os.popen(cmd).read()
-    reslist=res.split("\n")
-    ans1=0
-    ans2=1
-    for rl in reslist:
-        if ('tikv_grpc_msg_duration_seconds_sum{type="kv_scan"}' in rl):
-            ans1 = float(rl.split(' ')[1])
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_scan"}' in rl):
-            ans2 = float(rl.split(' ')[1])
-    ans=ans1/ans2
-    return(ans)
+    return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
+    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    # res=os.popen(cmd).read()
+    # reslist=res.split("\n")
+    # ans1=0
+    # ans2=1
+    # for rl in reslist:
+    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_scan"}' in rl):
+    #         ans1 = float(rl.split(' ')[1])
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_scan"}' in rl):
+    #         ans2 = float(rl.split(' ')[1])
+    # ans=ans1/ans2
+    # return(ans)
 
 def read_store_size(ip, port):
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
