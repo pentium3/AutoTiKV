@@ -6,7 +6,7 @@ ycsb_port="2379"
 
 
 # target metric
-target_metric_name="get_latency"
+target_metric_name="write_latency"
 
 # knobs to be tuned
 target_knob_set=["block_cache_size"]
@@ -22,4 +22,4 @@ wl_metrics={
     "smallpntlookup": ["get_throughput","get_latency","store_size","compaction_cpu"],        #READ
 }
 
-wltype = "pntlookup40"
+wltype = "writeheavy"
