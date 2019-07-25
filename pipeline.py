@@ -7,11 +7,12 @@ import time
 
 if __name__ == '__main__':
     ds = GPDataSet()
+    knob_cache = {}
     Round=100
     init_knobs()
     metric_list=wl_metrics[wltype]
     ds.initdataset(metric_list)
-    num_knobs = len(knob_set.keys())
+    num_knobs = len(target_knob_set)
     num_metrics = len(metric_list)
 
     #lres = load_workload(wltype)
@@ -23,6 +24,7 @@ if __name__ == '__main__':
         rec = configuration_recommendation(ds)
         for x in rec.keys():
             set_knob(x, rec[x])
+            knob_cache[x] = rec[x]
 
         print("Round: ", Round, rec)
 
@@ -33,8 +35,8 @@ if __name__ == '__main__':
         for i,x in enumerate(metric_list):
             new_metric_before[0][i] = read_metric(x)
 
-        for i,x in enumerate(knob_set.keys()):
-            new_knob_set[0][i] = read_knob(x)
+        for i,x in enumerate(target_knob_set):
+            new_knob_set[0][i] = read_knob(x, knob_cache)
 
         rres = run_workload(wltype)
         print(rres)

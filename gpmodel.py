@@ -872,7 +872,7 @@ def gen_random_data(target_data):
 
 
 def configuration_recommendation(target_data):
-    if(target_data.num_previousamples<10):                               # TODO: Could give random recommendation on several rounds at first, rather than only the first one round.
+    if(target_data.num_previousamples<5):                               #  give random recommendation on several rounds at first
         return gen_random_data(target_data)
     #target_data['X_matrix'] = previous_knob_set                         #__INPUT__ (num of samples*num of knobs)
     #target_data['y_matrix'] = previous_metric_set                       #__INPUT__ (num of samples*num of metrics)

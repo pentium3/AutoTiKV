@@ -8,6 +8,7 @@ def showres(FL, OUTNAME):
     FNAME=FL[0]
     ff=open(FNAME,'rb')
     ds=pickle.load(ff)
+    fo.write('rowlabel, ')
     for j in ds.knob_labels:
         fo.write(j+', ')
     for j in ds.metric_labels:
@@ -20,6 +21,7 @@ def showres(FL, OUTNAME):
         ds=pickle.load(ff)
         #print(FNAME)
         for i in range(ds.num_previousamples):
+            fo.write(str(ds.previous_rowlabels[i])+', ')
             for j in (ds.previous_knob_set[i]):
                 fo.write(str(float(j)) + ', ')
             for j in (ds.previous_metric_set[i]):
