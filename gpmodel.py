@@ -871,8 +871,8 @@ def gen_random_data(target_data):
     return random_knob_result
 
 
-def configuration_recommendation(target_data):
-    if(target_data.num_previousamples<5):                               #  give random recommendation on several rounds at first
+def configuration_recommendation(target_data, runrec=None):
+    if(target_data.num_previousamples<10 and runrec==None):                               #  give random recommendation on several rounds at first
         return gen_random_data(target_data)
     #target_data['X_matrix'] = previous_knob_set                         #__INPUT__ (num of samples*num of knobs)
     #target_data['y_matrix'] = previous_metric_set                       #__INPUT__ (num of samples*num of metrics)
