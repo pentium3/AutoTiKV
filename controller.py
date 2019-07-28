@@ -35,7 +35,7 @@ def set_write_buffer_size(ip, port, val):
 def read_write_buffer_size(ip, port, knob_cache):
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"write_buffer_size\"}\''
     res=os.popen(cmd).read()
-    res=int(res.split(' ')[1])
+    res=float(res.split(' ')[1])
     res=int(res/1024/1024)                          # bytes to MB
     return(res)
 

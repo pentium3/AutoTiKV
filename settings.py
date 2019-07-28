@@ -22,5 +22,6 @@ target_metric_name="write_latency"
 
 # several knobs to be tuned
 target_knob_set=["block_cache_size", "write_buffer_size", "delayed_write_rate", "target_file_size_base"]
+#target_knob_set=["block_cache_size", "write_buffer_size", "delayed_write_rate"]
 #target_knob_set=["block_cache_size"]
 
