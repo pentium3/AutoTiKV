@@ -83,7 +83,7 @@ knob_set=\
             "minval": 0,                                # if type!=enum, indicate min possible value
             "maxval": 0,                             # if type!=enum, indicate max possible value
             "enumval": [],                              # if type==enum, list all valid values
-            "type": "int",                              # int / enum / real / bool
+            "type": "int",                              # int / enum / real
             "default": 0                              # default value
         },
     "write_buffer_size":
@@ -93,7 +93,7 @@ knob_set=\
             "minval": 64,                           # if type!=enum, indicate min possible value
             "maxval": 1024,                         # if type!=enum, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
-            "type": "int",                          # int / enum / real / bool
+            "type": "int",                          # int / enum / real
             "default": 64                           # default value
         },
     "delayed_write_rate":
@@ -103,7 +103,7 @@ knob_set=\
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 100,                          # if type!=enum, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
-            "type": "int",                          # int / enum / real / bool
+            "type": "int",                          # int / enum / real
             "default": 1                            # default value
         },
     "target_file_size_base":
@@ -113,7 +113,7 @@ knob_set=\
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 0,                            # if type!=enum, indicate max possible value
             "enumval": [8,16,32,64,128],            # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real / bool
+            "type": "enum",                         # int / enum / real
             "default": 8                            # default value
         },
     "disable_auto_compactions":
@@ -123,7 +123,7 @@ knob_set=\
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 0,                            # if type!=enum, indicate max possible value
             "enumval": [0, 1],                      # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real / bool
+            "type": "enum",                         # int / enum / real
             "default": 0                            # default value
         },
     }

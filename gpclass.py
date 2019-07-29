@@ -839,17 +839,17 @@ def gen_random_data(target_data):
     random_knob_result = {}
     for name in target_data.knob_labels:
         vartype = knob_set[name]['type']
-        if vartype == 'bool':
-            flag = random.randint(0, 1)
-            if flag == 0:
-                random_knob_result[name] = False
-            else:
-                random_knob_result[name] = True
-        elif vartype == 'enum':
+        # if vartype == 'bool':
+        #     flag = random.randint(0, 1)
+        #     if flag == 0:
+        #         random_knob_result[name] = False
+        #     else:
+        #         random_knob_result[name] = True
+        if vartype == 'enum':
             enumvals = knob_set[name]['enumval']
             enumvals_len = len(enumvals)
             rand_idx = random.randint(0, enumvals_len - 1)
-            random_knob_result[name] = rand_idx
+            random_knob_result[name] = knob_set[name]['enumval'][rand_idx]
         elif vartype == 'int':
             minval=knob_set[name]['minval']
             maxval=knob_set[name]['maxval']
