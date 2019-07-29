@@ -670,7 +670,8 @@ class ParamConstraintHelper(object):
         return conv_sample
 
 
-class DummyEncoder(Preprocess):
+class DummyEncoder(Preprocess):   # transfer enum type of knobs into one-hot (does not modify other knobs).
+    # eg: https://files-cdn.cnblogs.com/files/pdev/dummyencode.bmp
 
     def __init__(self, n_values, categorical_features, cat_columnlabels, noncat_columnlabels):
         from sklearn.preprocessing import OneHotEncoder
@@ -849,7 +850,8 @@ def gen_random_data(target_data):
             enumvals = knob_set[name]['enumval']
             enumvals_len = len(enumvals)
             rand_idx = random.randint(0, enumvals_len - 1)
-            random_knob_result[name] = knob_set[name]['enumval'][rand_idx]
+            #random_knob_result[name] = knob_set[name]['enumval'][rand_idx]
+            random_knob_result[name] = rand_idx
         elif vartype == 'int':
             minval=knob_set[name]['minval']
             maxval=knob_set[name]['maxval']
