@@ -827,12 +827,12 @@ def dummy_encoder_helper(featured_knobs):
 
     n_values = np.array(n_values)
     cat_knob_indices = np.array(cat_knob_indices)
-    categorical_info = {'n_values': n_values,
-                        'categorical_features': cat_knob_indices,
-                        'cat_columnlabels': cat_knob_names,
-                        'noncat_columnlabels': noncat_knob_names,
-                        'binary_vars': binary_knob_indices}
-    return categorical_info
+    categorical_info = {'n_values': n_values,                              # n_values[x]: num of candidate values in enum type #x
+                        'categorical_features': cat_knob_indices,          # cat_knob_indices: index of enum type knobs in knob_set[]
+                        'cat_columnlabels': cat_knob_names,                # cat_knob_indices: name of enum type knobs in knob_set[]
+                        'noncat_columnlabels': noncat_knob_names,          # noncat_columnlabels: name of enum type knobs in knob_set[]
+                        'binary_vars': binary_knob_indices}                # binary_knob_indices: name of bool type knobs in knob_set[]
+    return categorical_info                                                #eg: {'n_values': array([5]), 'categorical_features': array([3]), 'cat_columnlabels': ['target_file_size_base'], 'noncat_columnlabels': ['block_cache_size', 'write_buffer_size', 'delayed_write_rate'], 'binary_vars': []}
 
 
 def gen_random_data(target_data):
