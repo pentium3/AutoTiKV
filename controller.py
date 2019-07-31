@@ -294,7 +294,7 @@ metric_set=\
 
 def run_workload(wl_type):
     #./go-ycsb run tikv -P ./workloads/smallpntlookup -p tikv.pd=192.168.1.130:2379
-    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
+    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads=512"
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
