@@ -26,6 +26,7 @@
 
 recordcount=80000000
 operationcount=5000000
+# fieldlength=10
 workload=core
 
 readallfields=true

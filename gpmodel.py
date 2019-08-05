@@ -25,19 +25,19 @@ def configuration_recommendation(target_data, runrec=None):
     y_columnlabels = y_columnlabels[target_obj_idx]
 
     # Combine duplicate rows in the target/workload data (separately)
-    X_workload, y_workload, rowlabels_workload = combine_duplicate_rows(X_workload, y_workload, rowlabels_workload)
-    X_target, y_target, rowlabels_target = combine_duplicate_rows(X_target, y_target, rowlabels_target)
+    #X_workload, y_workload, rowlabels_workload = combine_duplicate_rows(X_workload, y_workload, rowlabels_workload)
+    #X_target, y_target, rowlabels_target = combine_duplicate_rows(X_target, y_target, rowlabels_target)
 
     # Delete any rows that appear in both the workload data and the target
     # data from the workload data
-    dups_filter = np.ones(X_workload.shape[0], dtype=bool)
-    target_row_tups = [tuple(row) for row in X_target]
-    for i, row in enumerate(X_workload):
-        if tuple(row) in target_row_tups:
-            dups_filter[i] = False
-    X_workload = X_workload[dups_filter, :]
-    y_workload = y_workload[dups_filter, :]
-    rowlabels_workload = rowlabels_workload[dups_filter]
+    # dups_filter = np.ones(X_workload.shape[0], dtype=bool)
+    # target_row_tups = [tuple(row) for row in X_target]
+    # for i, row in enumerate(X_workload):
+    #     if tuple(row) in target_row_tups:
+    #         dups_filter[i] = False
+    # X_workload = X_workload[dups_filter, :]
+    # y_workload = y_workload[dups_filter, :]
+    # rowlabels_workload = rowlabels_workload[dups_filter]
 
     # Combine target & workload Xs for preprocessing
     X_matrix = np.vstack([X_target, X_workload])
