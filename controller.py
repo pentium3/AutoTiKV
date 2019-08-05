@@ -132,15 +132,16 @@ knob_set=\
 #------------------metric controller------------------
 
 def read_write_throughput(ip, port):
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    res=os.popen(cmd).read()
-    reslist=res.split("\n")
-    ans0 =0
-    for rl in reslist:
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_prewrite"}' in rl):
-            ans0 = int(rl.split(' ')[1])
-            break
-    return(ans0)
+    return(0)  # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
+    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    # res=os.popen(cmd).read()
+    # reslist=res.split("\n")
+    # ans0 =0
+    # for rl in reslist:
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_prewrite"}' in rl):
+    #         ans0 = int(rl.split(' ')[1])
+    #         break
+    # return(ans0)
 
 def read_write_latency(ip, port):
     return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
@@ -164,15 +165,16 @@ def read_write_latency(ip, port):
     # return(ans)
 
 def read_get_throughput(ip, port):
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    res=os.popen(cmd).read()
-    reslist=res.split("\n")
-    ans0 =0
-    for rl in reslist:
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_batch_get"}' in rl):
-            ans0 = int(rl.split(' ')[1])
-            break
-    return(ans0)
+    return(0)  # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
+    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    # res=os.popen(cmd).read()
+    # reslist=res.split("\n")
+    # ans0 =0
+    # for rl in reslist:
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_batch_get"}' in rl):
+    #         ans0 = int(rl.split(' ')[1])
+    #         break
+    # return(ans0)
 
 def read_get_latency(ip, port):
     return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
@@ -190,15 +192,16 @@ def read_get_latency(ip, port):
     # return(ans)
 
 def read_scan_throughput(ip, port):
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    res=os.popen(cmd).read()
-    reslist=res.split("\n")
-    ans0 =0
-    for rl in reslist:
-        if ('tikv_grpc_msg_duration_seconds_count{type="kv_scan"}' in rl):
-            ans0 = int(rl.split(' ')[1])
-            break
-    return(ans0)
+    return(0)  # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
+    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
+    # res=os.popen(cmd).read()
+    # reslist=res.split("\n")
+    # ans0 =0
+    # for rl in reslist:
+    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_scan"}' in rl):
+    #         ans0 = int(rl.split(' ')[1])
+    #         break
+    # return(ans0)
 
 def read_scan_latency(ip, port):
     return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
@@ -243,7 +246,7 @@ metric_set=\
          {
          "read_func": read_write_throughput,
          "lessisbetter": 0,                   # whether less value of this metric is better(1: yes)
-         "calc": "inc",                       #incremental
+         "calc": "ins",                       #incremental
          },
     "write_latency":
         {
@@ -255,7 +258,7 @@ metric_set=\
         {
          "read_func": read_get_throughput,
          "lessisbetter": 0,                   # whether less value of this metric is better(1: yes)
-         "calc": "inc",                       #incremental
+         "calc": "ins",                       #incremental
         },
     "get_latency":
         {
@@ -267,7 +270,7 @@ metric_set=\
         {
          "read_func": read_scan_throughput,
          "lessisbetter": 0,                   # whether less value of this metric is better(1: yes)
-         "calc": "inc",                       #incremental
+         "calc": "ins",                       #incremental
         },
     "scan_latency":
         {
@@ -343,6 +346,27 @@ def read_metric(metric_name, rres=None):
                 i+=1
             dat=rl[i][rl[i].find("Avg(us):") + 9:].split(",")[0]
             dat=int(dat)
+            return(dat)
+        elif(metric_name=="write_throughput"):
+            i=0
+            while((not rl[i].startswith('UPDATE ')) and (not rl[i].startswith('INSERT '))):
+                i+=1
+            dat=rl[i][rl[i].find("OPS:") + 5:].split(",")[0]
+            dat=float(dat)
+            return(dat)
+        elif(metric_name=="get_throughput"):
+            i=0
+            while(not rl[i].startswith('READ ')):
+                i+=1
+            dat=rl[i][rl[i].find("OPS:") + 5:].split(",")[0]
+            dat=float(dat)
+            return(dat)
+        elif(metric_name=="scan_throughput"):
+            i=0
+            while(not rl[i].startswith('SCAN ')):
+                i+=1
+            dat=rl[i][rl[i].find("OPS:") + 5:].split(",")[0]
+            dat=float(dat)
             return(dat)
     func=metric_set[metric_name]["read_func"]
     res=func(tikv_ip, tikv_port)
