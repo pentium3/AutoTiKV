@@ -35,7 +35,7 @@ def set_write_buffer_size(ip, port, val):
 def read_write_buffer_size(ip, port, knob_cache):
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"write_buffer_size\"}\''
     res=os.popen(cmd).read()
-    res=int(res.split(' ')[1])
+    res=float(res.split(' ')[1])
     res=int(res/1024/1024)                          # bytes to MB
     return(res)
 
@@ -83,7 +83,7 @@ knob_set=\
             "minval": 0,                                # if type!=enum, indicate min possible value
             "maxval": 0,                             # if type!=enum, indicate max possible value
             "enumval": [],                              # if type==enum, list all valid values
-            "type": "int",                              # int / enum / real / bool
+            "type": "int",                              # int / enum / real
             "default": 0                              # default value
         },
     "write_buffer_size":
@@ -93,7 +93,7 @@ knob_set=\
             "minval": 64,                           # if type!=enum, indicate min possible value
             "maxval": 1024,                         # if type!=enum, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
-            "type": "int",                          # int / enum / real / bool
+            "type": "int",                          # int / enum / real
             "default": 64                           # default value
         },
     "delayed_write_rate":
@@ -103,7 +103,7 @@ knob_set=\
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 100,                          # if type!=enum, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
-            "type": "int",                          # int / enum / real / bool
+            "type": "int",                          # int / enum / real
             "default": 1                            # default value
         },
     "target_file_size_base":
@@ -113,7 +113,7 @@ knob_set=\
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 0,                            # if type!=enum, indicate max possible value
             "enumval": [8,16,32,64,128],            # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real / bool
+            "type": "enum",                         # int / enum / real
             "default": 8                            # default value
         },
     "disable_auto_compactions":
@@ -123,7 +123,7 @@ knob_set=\
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 0,                            # if type!=enum, indicate max possible value
             "enumval": [0, 1],                      # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real / bool
+            "type": "enum",                         # int / enum / real
             "default": 0                            # default value
         },
     }
@@ -294,7 +294,7 @@ metric_set=\
 
 def run_workload(wl_type):
     #./go-ycsb run tikv -P ./workloads/smallpntlookup -p tikv.pd=192.168.1.130:2379
-    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port
+    cmd="./go-ycsb run tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads=512"
     print(cmd)
     res=os.popen(cmd).read()
     return(res)
@@ -351,9 +351,11 @@ def read_metric(metric_name, rres=None):
 def init_knobs():
     # if there are knobs whose range is related to PC memory size, initialize them here
     knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
-    knob_set["block_cache_size"]["default"]=512                          # a sample
-    #knob_set["block_cache_size"]["maxval"] = 1024
-    knob_set["block_cache_size"]["minval"] = 8
+    #knob_set["block_cache_size"]["default"]=512                          # a sample
+    #knob_set["block_cache_size"]["minval"] = 8
+    #knob_set["block_cache_size"]["maxval"] = 2048
+    knob_set["block_cache_size"]["minval"] = 2
+    knob_set["block_cache_size"]["default"] = 2
 
 def calc_metric(metric_after, metric_before, metric_list):
     num_metrics = len(metric_list)
