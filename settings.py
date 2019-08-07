@@ -25,3 +25,6 @@ target_metric_name="write_latency"
 #target_knob_set=["block_cache_size", "write_buffer_size", "delayed_write_rate"]
 #target_knob_set=["block_cache_size"]
 target_knob_set=["write_buffer_size", "block_cache_size"]
+
+ansibledir="/home/tidb/tidb-ansible/"
+deploydir="/home/tidb/deploy/"

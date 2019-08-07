@@ -1,6 +1,6 @@
 import sys
 import os
-from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port
+from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port, ansibledir, deploydir
 import psutil
 import numpy as np
 
@@ -390,5 +390,25 @@ def calc_metric(metric_after, metric_before, metric_list):
         elif(metric_set[x]["calc"]=="ins"):
             new_metric[0][i]=metric_after[0][i]
     return(new_metric)
+
+def restart_db():
+    #cmd="cd /home/tidb/tidb-ansible/ && ansible-playbook unsafe_cleanup_data.yml"
+    dircmd="cd "+ ansibledir + " && "
+    clrcmd="ansible-playbook unsafe_cleanup_data.yml"
+    depcmd="ansible-playbook deploy.yml"
+    runcmd="ansible-playbook start.yml"
+    ntpcmd="ansible-playbook -i hosts.ini deploy_ntp.yml -u tidb -b"   #need sleep 10s after ntpcmd
+    clrres = os.popen(dircmd+clrcmd).read()
+    print("-------------------------------------------------------")
+    print("unsafe_cleanup_data finished, res == "+clrres.split('\n')[-2])
+    print("-------------------------------------------------------")
+    depres = os.popen(dircmd + depcmd).read()
+    print("-------------------------------------------------------")
+    print("deploy finished, res == "+depres.split('\n')[-2])
+    print("-------------------------------------------------------")
+    runres = os.popen(dircmd + runcmd).read()
+    print("-------------------------------------------------------")
+    print("start finished, res == "+runres.split('\n')[-2])
+    print("-------------------------------------------------------")
 
 
