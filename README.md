@@ -13,3 +13,5 @@ go 1.12.2
 tikv-ctl
 
 go-ycsb
+
+Python 3.6
