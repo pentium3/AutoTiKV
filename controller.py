@@ -3,6 +3,7 @@ import os
 from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port, ansibledir, deploydir
 import psutil
 import numpy as np
+from ruamel import yaml
 
 #MEM_MAX = psutil.virtual_memory().total
 MEM_MAX = 0.8*32*1024*1024*1024                 # memory size of tikv node, not current PC
@@ -10,119 +11,81 @@ MEM_MAX = 0.8*32*1024*1024*1024                 # memory size of tikv node, not 
 
 #------------------knob controller------------------
 
-# block_cache_size
-def set_block_cache_size(ip, port, val):
-    #./tikv-ctl --host 192.168.1.104:20160 modify-tikv-config -m storage -n block_cache.capacity -v 3072MB
-    cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m storage -n block_cache.capacity -v "+str(val)+"MB"
-    res=os.popen(cmd).read()                        # will return "success"
-    return(res)
-
-def read_block_cache_size(ip, port, knob_cache):
-    #./tikv-ctl --host 192.168.1.104:20160 metrics | grep "tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}"
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"block_cache_size\"}\''
-    res=os.popen(cmd).read()
-    res=int(res.split(' ')[1])
-    res=int(res/1024/1024)                          # bytes to MB
-    return(res)
-
-# write_buffer_size
-def set_write_buffer_size(ip, port, val):
-    val=val*1024*1024                               # MB to bytes
-    cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m kvdb -n default.write_buffer_size -v "+str(val)
-    res=os.popen(cmd).read()                        # will return "success"
-    return(res)
-
-def read_write_buffer_size(ip, port, knob_cache):
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"write_buffer_size\"}\''
-    res=os.popen(cmd).read()
-    res=float(res.split(' ')[1])
-    res=int(res/1024/1024)                          # bytes to MB
-    return(res)
-
-# delayed_write_rate
-def set_delayed_write_rate(ip, port, val):
-    cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m kvdb -n delayed_write_rate -v "+str(val)+"MB"
-    res=os.popen(cmd).read()                        # will return "success"
-    return(res)
-
-def read_delayed_write_rate(ip, port, knob_cache):
-    res=knob_cache['delayed_write_rate']
-    return(res)
-
-# target_file_size_base
-def set_target_file_size_base(ip, port, val):
-    val=val*1024*1024                               # MB to bytes
-    cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m kvdb -n default.target_file_size_base -v "+str(val)
-    res=os.popen(cmd).read()                        # will return "success"
-    return(res)
-
-def read_target_file_size_base(ip, port, knob_cache):
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"target_file_size_base\"}\''
-    res=os.popen(cmd).read()
-    res=int(res.split(' ')[1])
-    res=int(res/1024/1024)                          # bytes to MB
-    return(res)
-
 # disable_auto_compactions
 def set_disable_auto_compactions(ip, port, val):
     cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m raftdb -n default.disable_auto_compactions -v "+str(val)
     res=os.popen(cmd).read()                        # will return "success"
     return(res)
 
-def read_disable_auto_compactions(ip, port, knob_cache):
-    cmd='./tikv-ctl --host '+ip+':'+port+' metrics | grep \'tikv_config_rocksdb{cf=\"default\",name=\"disable_auto_compactions\"}\''
-    res=os.popen(cmd).read()
-    res=int(res.split(' ')[1])
-    return(res)
-
 knob_set=\
-    {"block_cache_size":
+    {
+    "write-buffer-size":
         {
-            "read_func": read_block_cache_size,
-            "set_func": set_block_cache_size,
-            "minval": 0,                                # if type!=enum, indicate min possible value
-            "maxval": 0,                             # if type!=enum, indicate max possible value
-            "enumval": [],                              # if type==enum, list all valid values
-            "type": "int",                              # int / enum / real
-            "default": 0                              # default value
-        },
-    "write_buffer_size":
-        {
-            "read_func": read_write_buffer_size,
-            "set_func": set_write_buffer_size,
+            "changebyyml": True,
+            "set_func": None,
             "minval": 64,                           # if type!=enum, indicate min possible value
             "maxval": 1024,                         # if type!=enum, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
             "type": "int",                          # int / enum / real
             "default": 64                           # default value
         },
-    "delayed_write_rate":
+    "max-bytes-for-level-base":
         {
-            "read_func": read_delayed_write_rate,
-            "set_func": set_delayed_write_rate,
-            "minval": 0,                            # if type!=enum, indicate min possible value
-            "maxval": 100,                          # if type!=enum, indicate max possible value
+            "changebyyml": True,
+            "set_func": None,
+            "minval": 512,                            # if type!=enum, indicate min possible value
+            "maxval": 4096,                          # if type!=enum, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
             "type": "int",                          # int / enum / real
-            "default": 1                            # default value
+            "default": 512                            # default value
         },
-    "target_file_size_base":
+    "target-file-size-base":
         {
-            "read_func": read_target_file_size_base,
-            "set_func": set_target_file_size_base,
+            "changebyyml": True,
+            "set_func": None,
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 0,                            # if type!=enum, indicate max possible value
             "enumval": [8,16,32,64,128],            # if type==enum, list all valid values
             "type": "enum",                         # int / enum / real
             "default": 8                            # default value
         },
-    "disable_auto_compactions":
+    "disable-auto-compactions":
         {
-            "read_func": read_disable_auto_compactions,
+            "changebyyml": False,
             "set_func": set_disable_auto_compactions,
             "minval": 0,                            # if type!=enum, indicate min possible value
             "maxval": 0,                            # if type!=enum, indicate max possible value
             "enumval": [0, 1],                      # if type==enum, list all valid values
+            "type": "enum",                         # int / enum / real
+            "default": 0                            # default value
+        },
+    "block-size":
+        {
+            "changebyyml": True,
+            "set_func": None,
+            "minval": 0,                            # if type!=enum, indicate min possible value
+            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "enumval": [4, 8, 16, 32, 64],          # if type==enum, list all valid values
+            "type": "enum",                         # int / enum / real
+            "default": 0                            # default value
+        },
+    "bloom-filter-bits-per-key":
+        {
+            "changebyyml": True,
+            "set_func": None,
+            "minval": 0,                            # if type!=enum, indicate min possible value
+            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "enumval": [5,10,15,20],                # if type==enum, list all valid values
+            "type": "enum",                         # int / enum / real
+            "default": 0                            # default value
+        },
+    "optimize-filters-for-hits":
+        {
+            "changebyyml": True,
+            "set_func": None,
+            "minval": 0,                            # if type!=enum, indicate min possible value
+            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "enumval": ['true', 'false'],           # if type==enum, list all valid values
             "type": "enum",                         # int / enum / real
             "default": 0                            # default value
         },
@@ -132,91 +95,22 @@ knob_set=\
 #------------------metric controller------------------
 
 def read_write_throughput(ip, port):
-    return(0)  # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
-    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    # res=os.popen(cmd).read()
-    # reslist=res.split("\n")
-    # ans0 =0
-    # for rl in reslist:
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_prewrite"}' in rl):
-    #         ans0 = int(rl.split(' ')[1])
-    #         break
-    # return(ans0)
+    return(0)           # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
 
 def read_write_latency(ip, port):
     return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
-    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    # res=os.popen(cmd).read()
-    # reslist=res.split("\n")
-    # ans1=0
-    # ans2=1
-    # ans3=0
-    # ans4=1
-    # for rl in reslist:
-    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_prewrite"}' in rl):
-    #         ans1 = float(rl.split(' ')[1])
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_prewrite"}' in rl):
-    #         ans2 = float(rl.split(' ')[1])
-    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_commit"}' in rl):
-    #         ans3 = float(rl.split(' ')[1])
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_commit"}' in rl):
-    #         ans4 = float(rl.split(' ')[1])
-    # ans=(ans1/ans2)+(ans3/ans4)
-    # return(ans)
 
 def read_get_throughput(ip, port):
-    return(0)  # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
-    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    # res=os.popen(cmd).read()
-    # reslist=res.split("\n")
-    # ans0 =0
-    # for rl in reslist:
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_batch_get"}' in rl):
-    #         ans0 = int(rl.split(' ')[1])
-    #         break
-    # return(ans0)
+    return(0)           # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
 
 def read_get_latency(ip, port):
     return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
-    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    # res=os.popen(cmd).read()
-    # reslist=res.split("\n")
-    # ans1=0
-    # ans2=1
-    # for rl in reslist:
-    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_batch_get"}' in rl):
-    #         ans1 = float(rl.split(' ')[1])
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_batch_get"}' in rl):
-    #         ans2 = float(rl.split(' ')[1])
-    # ans=ans1/ans2
-    # return(ans)
 
 def read_scan_throughput(ip, port):
-    return(0)  # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
-    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    # res=os.popen(cmd).read()
-    # reslist=res.split("\n")
-    # ans0 =0
-    # for rl in reslist:
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_scan"}' in rl):
-    #         ans0 = int(rl.split(' ')[1])
-    #         break
-    # return(ans0)
+    return(0)           # DEPRECATED FUNCTION: throughput is instant and could be read from go-ycsb. No need to read in this function
 
 def read_scan_latency(ip, port):
     return(0)           # DEPRECATED FUNCTION: latency is instant and could be read from go-ycsb. No need to read in this function
-    # cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
-    # res=os.popen(cmd).read()
-    # reslist=res.split("\n")
-    # ans1=0
-    # ans2=1
-    # for rl in reslist:
-    #     if ('tikv_grpc_msg_duration_seconds_sum{type="kv_scan"}' in rl):
-    #         ans1 = float(rl.split(' ')[1])
-    #     if ('tikv_grpc_msg_duration_seconds_count{type="kv_scan"}' in rl):
-    #         ans2 = float(rl.split(' ')[1])
-    # ans=ans1/ans2
-    # return(ans)
 
 def read_store_size(ip, port):
     cmd='./tikv-ctl --host '+ip+':'+port+' metrics'
@@ -312,14 +206,35 @@ def load_workload(wl_type):
 
 #------------------common functions------------------
 
+def set_tikvyml(knob_name, knob_val):
+    ymldir=os.path.join(ansibledir,"conf","tikv_newcfg.yml")
+    tmpdir=os.path.join(ansibledir,"conf","tikv.yml")
+    tmpf=open(tmpdir)
+    tmpcontent=yaml.load(tmpf, Loader=yaml.RoundTripLoader)
+    if(knob_name=='block-size'):
+        knob_val=str(knob_val)+"KB"
+    if(knob_name=='write-buffer-size' or knob_name=='max-bytes-for-level-base' or knob_name=='target-file-size-base'):
+        knob_val=str(knob_val)+"MB"
+    if(knob_name in tmpcontent['rocksdb']['defaultcf']):
+        tmpcontent['rocksdb']['defaultcf'][knob_name]=knob_val
+    else:
+        return('failed')
+    ymlf=open(ymldir, 'w')
+    yaml.dump(tmpcontent, ymlf, Dumper=yaml.RoundTripDumper)
+    os.popen("rm "+tmpdir+" && "+"mv "+ymldir+" "+tmpdir)
+    return('success')
+
 def set_knob(knob_name, knob_val):
-    func=knob_set[knob_name]["set_func"]
-    res=func(tikv_ip, tikv_port, knob_val)
+    changebyyml=knob_set[knob_name]["changebyyml"]
+    if(changebyyml):
+        res=set_tikvyml(knob_name, knob_val)
+    else:
+        func=knob_set[knob_name]["set_func"]
+        res=func(tikv_ip, tikv_port, knob_val)
     return res
 
 def read_knob(knob_name, knob_cache):
-    func=knob_set[knob_name]["read_func"]
-    res=func(tikv_ip, tikv_port, knob_cache)
+    res=knob_cache[knob_name]
     return res
 
 def read_metric(metric_name, rres=None):
@@ -374,12 +289,7 @@ def read_metric(metric_name, rres=None):
 
 def init_knobs():
     # if there are knobs whose range is related to PC memory size, initialize them here
-    knob_set["block_cache_size"]["maxval"]=int(MEM_MAX/1024/1024)        # (MB)
-    #knob_set["block_cache_size"]["default"]=512                          # a sample
-    #knob_set["block_cache_size"]["minval"] = 8
-    #knob_set["block_cache_size"]["maxval"] = 2048
-    knob_set["block_cache_size"]["minval"] = 2
-    knob_set["block_cache_size"]["default"] = 2
+    pass
 
 def calc_metric(metric_after, metric_before, metric_list):
     num_metrics = len(metric_list)

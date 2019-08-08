@@ -15,3 +15,11 @@ tikv-ctl
 go-ycsb
 
 Python 3.6
+
+
+### Install
+
+```./install.sh```
+
+Then copy tikv_template.yml to TIDB_ANSIBLE/conf/tikv.yml
+

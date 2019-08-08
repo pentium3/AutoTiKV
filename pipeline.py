@@ -7,7 +7,6 @@ import time
 
 if __name__ == '__main__':
     ds = GPDataSet()
-    knob_cache = {}
     Round=200
     init_knobs()
     metric_list=wl_metrics[wltype]
@@ -22,6 +21,7 @@ if __name__ == '__main__':
     while(Round>0):
         print("################## start a new Round ##################")
         rec = configuration_recommendation(ds)
+        knob_cache = {}
         for x in rec.keys():
             set_knob(x, rec[x])
             knob_cache[x] = rec[x]
