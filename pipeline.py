@@ -14,6 +14,7 @@ if __name__ == '__main__':
     num_knobs = len(target_knob_set)
     num_metrics = len(metric_list)
 
+    #restart_db()
     #lres = load_workload(wltype)
     #print(lres)
 
