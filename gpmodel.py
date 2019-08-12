@@ -168,13 +168,14 @@ def configuration_recommendation(target_data, runrec=None):
     # print("constrains_max::::::::", X_max)
     # print("train:::::::: ", X_scaled.shape, X_scaled, type(X_scaled[0][0]))
     # print("train:::::::: ", y_scaled.shape, y_scaled, type(y_scaled[0][0]))
-    print("predict:::::::: ", X_samples.shape, X_samples, type(X_samples[0][0]))
+    print("predict:::::::: ", X_samples.shape, X_scaler.inverse_transform(X_samples).astype(np.int16), type(X_samples[0][0]))
     res = model.predict(X_samples, constraint_helper=constraint_helper)
 
     best_config_idx = np.argmin(res.minl.ravel())
     best_config = res.minl_conf[best_config_idx, :]
     best_config = X_scaler.inverse_transform(best_config)
-    print('best_config==', best_config)
+    print("rec:::::::", X_scaler.inverse_transform(res.minl_conf), res.minl)
+    print('best_config==', best_config_idx, best_config)
     # Decode one-hot encoding into categorical knobs
     best_config = dummy_encoder.inverse_transform(best_config)
 
