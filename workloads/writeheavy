@@ -25,7 +25,7 @@
 # 80GB
 
 recordcount=80000000
-operationcount=5000000
+operationcount=50000
 # fieldlength=10
 workload=core
 

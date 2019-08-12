@@ -807,24 +807,28 @@ def dummy_encoder_helper(featured_knobs):
 
         # check if knob is ENUM
         #if knob.vartype == VarType.ENUM:
-        if knob['type'] == "enum":
-            # enumvals is a comma delimited list
-            #enumvals = knob.enumvals.split(",")
-            enumvals = knob['enumval']
-            if len(enumvals) > 2:
-                # more than 2 values requires dummy encoding
-                n_values.append(len(enumvals))
-                cat_knob_indices.append(i)
-                cat_knob_names.append(knob_name)
-            else:
-                # knob is binary
-                noncat_knob_names.append(knob_name)
-                binary_knob_indices.append(i)
-        else:
-            #if knob.vartype == VarType.BOOL:
-            if knob['type'] == 'bool':
-                binary_knob_indices.append(i)
-            noncat_knob_names.append(knob_name)
+        # if knob['type'] == "enum":
+        #     # enumvals is a comma delimited list
+        #     #enumvals = knob.enumvals.split(",")
+        #     enumvals = knob['enumval']
+        #     if len(enumvals) > 2:
+        #         # more than 2 values requires dummy encoding
+        #         n_values.append(len(enumvals))
+        #         cat_knob_indices.append(i)
+        #         cat_knob_names.append(knob_name)
+        #     else:
+        #         # knob is binary
+        #         noncat_knob_names.append(knob_name)
+        #         binary_knob_indices.append(i)
+        # else:
+        #     #if knob.vartype == VarType.BOOL:
+        #     if knob['type'] == 'bool':
+        #         binary_knob_indices.append(i)
+        #     noncat_knob_names.append(knob_name)
+
+        if knob['type'] == 'bool':
+            binary_knob_indices.append(i)
+        noncat_knob_names.append(knob_name)
 
     n_values = np.array(n_values)
     cat_knob_indices = np.array(cat_knob_indices)
@@ -846,7 +850,7 @@ def gen_random_data(target_data):
         #         random_knob_result[name] = False
         #     else:
         #         random_knob_result[name] = True
-        if vartype == 'enum':
+        if (vartype == 'enum' or vartype == 'bool'):
             enumvals = knob_set[name]['enumval']
             enumvals_len = len(enumvals)
             rand_idx = random.randint(0, enumvals_len - 1)

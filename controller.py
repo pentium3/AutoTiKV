@@ -23,70 +23,70 @@ knob_set=\
         {
             "changebyyml": True,
             "set_func": None,
-            "minval": 64,                           # if type!=enum, indicate min possible value
-            "maxval": 1024,                         # if type!=enum, indicate max possible value
+            "minval": 64,                           # if type==int, indicate min possible value
+            "maxval": 1024,                         # if type==int, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
-            "type": "int",                          # int / enum / real
+            "type": "int",                          # int / enum
             "default": 64                           # default value
         },
     "max-bytes-for-level-base":
         {
             "changebyyml": True,
             "set_func": None,
-            "minval": 512,                            # if type!=enum, indicate min possible value
-            "maxval": 4096,                          # if type!=enum, indicate max possible value
+            "minval": 512,                          # if type==int, indicate min possible value
+            "maxval": 4096,                         # if type==int, indicate max possible value
             "enumval": [],                          # if type==enum, list all valid values
-            "type": "int",                          # int / enum / real
+            "type": "int",                          # int / enum
             "default": 512                            # default value
         },
     "target-file-size-base":
         {
             "changebyyml": True,
             "set_func": None,
-            "minval": 0,                            # if type!=enum, indicate min possible value
-            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "minval": 0,                            # if type==int, indicate min possible value
+            "maxval": 0,                            # if type==int, indicate max possible value
             "enumval": [8,16,32,64,128],            # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real
+            "type": "enum",                         # int / enum
             "default": 8                            # default value
         },
     "disable-auto-compactions":
         {
             "changebyyml": False,
             "set_func": set_disable_auto_compactions,
-            "minval": 0,                            # if type!=enum, indicate min possible value
-            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "minval": 0,                            # if type==int, indicate min possible value
+            "maxval": 0,                            # if type==int, indicate max possible value
             "enumval": [0, 1],                      # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real
+            "type": "enum",                         # int / enum
             "default": 0                            # default value
         },
     "block-size":
         {
             "changebyyml": True,
             "set_func": None,
-            "minval": 0,                            # if type!=enum, indicate min possible value
-            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "minval": 0,                            # if type==int, indicate min possible value
+            "maxval": 0,                            # if type==int, indicate max possible value
             "enumval": [4, 8, 16, 32, 64],          # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real
+            "type": "enum",                         # int / enum
             "default": 0                            # default value
         },
     "bloom-filter-bits-per-key":
         {
             "changebyyml": True,
             "set_func": None,
-            "minval": 0,                            # if type!=enum, indicate min possible value
-            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "minval": 0,                            # if type==int, indicate min possible value
+            "maxval": 0,                            # if type==int, indicate max possible value
             "enumval": [5,10,15,20],                # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real
+            "type": "enum",                         # int / enum
             "default": 0                            # default value
         },
     "optimize-filters-for-hits":
         {
             "changebyyml": True,
             "set_func": None,
-            "minval": 0,                            # if type!=enum, indicate min possible value
-            "maxval": 0,                            # if type!=enum, indicate max possible value
+            "minval": 0,                            # if type==int, indicate min possible value
+            "maxval": 0,                            # if type==int, indicate max possible value
             "enumval": ['true', 'false'],           # if type==enum, list all valid values
-            "type": "enum",                         # int / enum / real
+            "type": "enum",                         # int / enum
             "default": 0                            # default value
         },
     }
@@ -211,6 +211,9 @@ def set_tikvyml(knob_name, knob_val):
     tmpdir=os.path.join(ansibledir,"conf","tikv.yml")
     tmpf=open(tmpdir)
     tmpcontent=yaml.load(tmpf, Loader=yaml.RoundTripLoader)
+    if(knob_set[knob_name]['type']=='enum' or knob_set[knob_name]['type']=='bool'):
+        idx=knob_val
+        knob_val=knob_set[knob_name]['enumval'][idx]
     if(knob_name=='block-size'):
         knob_val=str(knob_val)+"KB"
     if(knob_name=='write-buffer-size' or knob_name=='max-bytes-for-level-base' or knob_name=='target-file-size-base'):
