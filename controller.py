@@ -2,6 +2,7 @@ import sys
 import os
 from settings import tikv_ip, tikv_port, tikv_pd_ip, ycsb_port, ansibledir, deploydir
 import psutil
+import time
 import numpy as np
 from ruamel import yaml
 
@@ -225,6 +226,7 @@ def set_tikvyml(knob_name, knob_val):
     ymlf=open(ymldir, 'w')
     yaml.dump(tmpcontent, ymlf, Dumper=yaml.RoundTripDumper)
     os.popen("rm "+tmpdir+" && "+"mv "+ymldir+" "+tmpdir)
+    time.sleep(0.5)
     return('success')
 
 def set_knob(knob_name, knob_val):

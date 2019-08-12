@@ -1,6 +1,7 @@
 from gpclass import *
 
 def configuration_recommendation(target_data, runrec=None):
+    print("running configuration recommendation...")
     if(target_data.num_previousamples<10 and runrec==None):                               #  give random recommendation on several rounds at first
         return gen_random_data(target_data)
 
@@ -167,7 +168,7 @@ def configuration_recommendation(target_data, runrec=None):
     # print("constrains_max::::::::", X_max)
     # print("train:::::::: ", X_scaled.shape, X_scaled, type(X_scaled[0][0]))
     # print("train:::::::: ", y_scaled.shape, y_scaled, type(y_scaled[0][0]))
-    # print("predict:::::::: ", X_samples.shape, X_samples, type(X_samples[0][0]))
+    print("predict:::::::: ", X_samples.shape, X_samples, type(X_samples[0][0]))
     res = model.predict(X_samples, constraint_helper=constraint_helper)
 
     best_config_idx = np.argmin(res.minl.ravel())
