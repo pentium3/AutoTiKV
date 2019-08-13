@@ -26,9 +26,9 @@ if __name__ == '__main__':
 
         print("Round: ", Round, rec)
 
-        # restart_db()
-        # lres = load_workload(wltype)
-        # print(lres)
+        restart_db()
+        lres = load_workload(wltype)
+        print(lres)
 
         new_knob_set = np.zeros([1, num_knobs])
         new_metric_before = np.zeros([1, num_metrics])
