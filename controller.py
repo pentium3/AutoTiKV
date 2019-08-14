@@ -14,7 +14,7 @@ MEM_MAX = 0.8*32*1024*1024*1024                 # memory size of tikv node, not 
 
 # disable_auto_compactions
 def set_disable_auto_compactions(ip, port, val):
-    cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m raftdb -n default.disable_auto_compactions -v "+str(val)
+    cmd="./tikv-ctl --host "+ip+":"+port+" modify-tikv-config -m kvdb -n default.disable_auto_compactions -v "+str(val)
     res=os.popen(cmd).read()                        # will return "success"
     return(res)
 
@@ -199,7 +199,7 @@ def run_workload(wl_type):
 
 def load_workload(wl_type):
     #./go-ycsb load tikv -P ./workloads/smallpntlookup -p tikv.pd=192.168.1.130:2379
-    cmd="./tikv-ctl --host "+tikv_ip+":"+tikv_port+" modify-tikv-config -m raftdb -n default.disable_auto_compactions -v 1"
+    cmd="./tikv-ctl --host "+tikv_ip+":"+tikv_port+" modify-tikv-config -m kvdb -n default.disable_auto_compactions -v 1"
     tmp=os.popen(cmd).read()                        # will return "success"
     cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads=512"
     print(cmd)
