@@ -559,6 +559,8 @@ rocksdb:
     ## while using `Raw` mode.
     optimize-filters-for-hits: true
 
+    disable-auto-compactions: true
+
     ## Options for "Titan" for "Default" Column Family
     titan:
       ## The smallest value to store in blob files. Value smaller than
