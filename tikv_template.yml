@@ -559,7 +559,7 @@ rocksdb:
     ## while using `Raw` mode.
     optimize-filters-for-hits: true
 
-    disable-auto-compactions: true
+    disable-auto-compactions: false
 
     ## Options for "Titan" for "Default" Column Family
     titan:
