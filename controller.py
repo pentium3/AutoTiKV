@@ -199,13 +199,13 @@ def run_workload(wl_type):
 
 def load_workload(wl_type):
     #./go-ycsb load tikv -P ./workloads/smallpntlookup -p tikv.pd=192.168.1.130:2379
-    cmd="./tikv-ctl --host "+tikv_ip+":"+tikv_port+" modify-tikv-config -m kvdb -n default.disable_auto_compactions -v 1"
-    tmp=os.popen(cmd).read()                        # will return "success"
+    # cmd="./tikv-ctl --host "+tikv_ip+":"+tikv_port+" modify-tikv-config -m kvdb -n default.disable_auto_compactions -v 1"
+    # tmp=os.popen(cmd).read()                        # will return "success"
     cmd="./go-ycsb load tikv -P ./workloads/"+wl_type+" -p tikv.pd="+tikv_pd_ip+':'+ycsb_port+" --threads=512"
     print(cmd)
     res=os.popen(cmd).read()
-    cmd="./tikv-ctl --host "+tikv_ip+":"+tikv_port+" compact -d kv --threads=512"
-    tmp=os.popen(cmd).read()                        # will return "success"
+    # cmd="./tikv-ctl --host "+tikv_ip+":"+tikv_port+" compact -d kv --threads=512"
+    # tmp=os.popen(cmd).read()                        # will return "success"
     return(res)
 
 
