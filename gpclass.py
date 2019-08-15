@@ -826,8 +826,8 @@ def dummy_encoder_helper(featured_knobs):
         #         binary_knob_indices.append(i)
         #     noncat_knob_names.append(knob_name)
 
-        if knob['type'] == 'bool':
-            binary_knob_indices.append(i)
+        # if knob['type'] == 'bool':
+        #     binary_knob_indices.append(i)
         noncat_knob_names.append(knob_name)
 
     n_values = np.array(n_values)

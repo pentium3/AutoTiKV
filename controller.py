@@ -56,8 +56,8 @@ knob_set=\
             "set_func": None,
             "minval": 0,                            # if type==int, indicate min possible value
             "maxval": 0,                            # if type==int, indicate max possible value
-            "enumval": ['true', 'false'],           # if type==enum, list all valid values
-            "type": "enum",                         # int / enum
+            "enumval": ['false', 'true'],           # if type==enum, list all valid values
+            "type": "bool",                         # int / enum
             "default": 0                            # default value
         },
     "block-size":
@@ -86,8 +86,8 @@ knob_set=\
             "set_func": None,
             "minval": 0,                            # if type==int, indicate min possible value
             "maxval": 0,                            # if type==int, indicate max possible value
-            "enumval": ['true', 'false'],           # if type==enum, list all valid values
-            "type": "enum",                         # int / enum
+            "enumval": ['false', 'true'],           # if type==enum, list all valid values
+            "type": "bool",                         # int / enum
             "default": 0                            # default value
         },
     }
@@ -216,9 +216,14 @@ def set_tikvyml(knob_name, knob_val):
     tmpdir=os.path.join(ansibledir,"conf","tikv.yml")
     tmpf=open(tmpdir)
     tmpcontent=yaml.load(tmpf, Loader=yaml.RoundTripLoader)
-    if(knob_set[knob_name]['type']=='enum' or knob_set[knob_name]['type']=='bool'):
+    if(knob_set[knob_name]['type']=='enum'):
         idx=knob_val
         knob_val=knob_set[knob_name]['enumval'][idx]
+    if(knob_set[knob_name]['type']=='bool'):
+        if(knob_val==0):
+            knob_val=False
+        else:
+            knob_val=True
     if(knob_name=='block-size'):
         knob_val=str(knob_val)+"KB"
     if(knob_name=='write-buffer-size' or knob_name=='max-bytes-for-level-base' or knob_name=='target-file-size-base'):
@@ -227,6 +232,7 @@ def set_tikvyml(knob_name, knob_val):
         tmpcontent['rocksdb']['defaultcf'][knob_name]=knob_val
     else:
         return('failed')
+    print("set_tikvyml:: ",knob_name, knob_val)
     ymlf=open(ymldir, 'w')
     yaml.dump(tmpcontent, ymlf, Dumper=yaml.RoundTripDumper)
     os.popen("rm "+tmpdir+" && "+"mv "+ymldir+" "+tmpdir)
