@@ -15,10 +15,10 @@ wl_metrics={
 }
 
 # workload to be run
-wltype = "writeheavy"
+wltype = "pntlookup80"
 
 # only 1 target metric to be optimized
-target_metric_name="write_latency"
+target_metric_name="get_latency"
 
 # several knobs to be tuned
 target_knob_set=['disable-auto-compactions', 'block-size']
