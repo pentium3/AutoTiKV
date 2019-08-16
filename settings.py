@@ -21,7 +21,7 @@ wltype = "pntlookup80"
 target_metric_name="get_latency"
 
 # several knobs to be tuned
-target_knob_set=['disable-auto-compactions', 'block-size']
+target_knob_set=['bloom-filter-bits-per-key', 'optimize-filters-for-hits', 'block-size', 'disable-auto-compactions']
 #target_knob_set=['disable-auto-compactions', 'optimize-filters-for-hits', 'write-buffer-size', 'block-size', 'max-bytes-for-level-base']
 
 ansibledir="/home/tidb/tidb-ansible/"
