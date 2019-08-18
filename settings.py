@@ -15,10 +15,10 @@ wl_metrics={
 }
 
 # workload to be run
-wltype = "pntlookup80"
+wltype = "shortscan"
 
 # only 1 target metric to be optimized
-target_metric_name="get_latency"
+target_metric_name="scan_throughput"
 
 # several knobs to be tuned
 target_knob_set=['bloom-filter-bits-per-key', 'optimize-filters-for-hits', 'block-size', 'disable-auto-compactions']
