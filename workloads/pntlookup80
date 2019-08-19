@@ -24,8 +24,8 @@
 # 80GB
 # 2min each run
 
-recordcount=80000000
-operationcount=4000000
+recordcount=160000000
+operationcount=2000000
 workload=core
 
 readallfields=true

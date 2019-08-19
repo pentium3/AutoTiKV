@@ -1,7 +1,7 @@
 from controller import read_metric, read_knob, set_knob, knob_set, init_knobs, load_workload, run_workload, calc_metric, restart_db
 from gpmodel import configuration_recommendation
 from datamodel import GPDataSet
-from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, wl_metrics, wltype
+from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, wl_metrics, wltype, loadtype
 import numpy as np
 import time
 
@@ -27,7 +27,7 @@ if __name__ == '__main__':
         print("Round: ", Round, rec)
 
         restart_db()
-        lres = load_workload(wltype)
+        lres = load_workload(loadtype)
         print(lres)
 
         new_knob_set = np.zeros([1, num_knobs])

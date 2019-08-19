@@ -13,15 +13,20 @@ wl_metrics={
     "shortscan": ["write_throughput","write_latency","scan_throughput","scan_latency","store_size","compaction_cpu"],        #SCAN, INSERT
     "smallpntlookup": ["get_throughput","get_latency","store_size","compaction_cpu"],       #READ
 }
-
+# workload to be load
+loadtype = "pntlookup80_load"
 # workload to be run
-wltype = "shortscan"
+wltype = "pntlookup80"
 
 # only 1 target metric to be optimized
-target_metric_name="scan_throughput"
+target_metric_name="get_throughput"
 
 # several knobs to be tuned
-target_knob_set=['bloom-filter-bits-per-key', 'optimize-filters-for-hits', 'block-size', 'disable-auto-compactions']
+target_knob_set=['rocksdb.writecf.bloom-filter-bits-per-key',
+                 'rocksdb.defaultcf.bloom-filter-bits-per-key',
+                 'rocksdb.writecf.optimize-filters-for-hits',
+                 'rocksdb.defaultcf.block-size',
+                 'rocksdb.defaultcf.disable-auto-compactions']
 #target_knob_set=['disable-auto-compactions', 'optimize-filters-for-hits', 'write-buffer-size', 'block-size', 'max-bytes-for-level-base']
 
 ansibledir="/home/tidb/tidb-ansible/"

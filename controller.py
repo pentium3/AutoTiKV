@@ -20,7 +20,7 @@ def set_disable_auto_compactions(ip, port, val):
 
 knob_set=\
     {
-    "write-buffer-size":
+    "rocksdb.defaultcf.write-buffer-size":
         {
             "changebyyml": True,
             "set_func": None,
@@ -30,7 +30,7 @@ knob_set=\
             "type": "int",                          # int / enum
             "default": 64                           # default value
         },
-    "max-bytes-for-level-base":
+    "rocksdb.defaultcf.max-bytes-for-level-base":
         {
             "changebyyml": True,
             "set_func": None,
@@ -40,7 +40,7 @@ knob_set=\
             "type": "int",                          # int / enum
             "default": 512                            # default value
         },
-    "target-file-size-base":
+    "rocksdb.defaultcf.target-file-size-base":
         {
             "changebyyml": True,
             "set_func": None,
@@ -50,7 +50,7 @@ knob_set=\
             "type": "enum",                         # int / enum
             "default": 8                            # default value
         },
-    "disable-auto-compactions":
+    "rocksdb.defaultcf.disable-auto-compactions":
         {
             "changebyyml": True,
             "set_func": None,
@@ -60,7 +60,7 @@ knob_set=\
             "type": "bool",                         # int / enum
             "default": 0                            # default value
         },
-    "block-size":
+    "rocksdb.defaultcf.block-size":
         {
             "changebyyml": True,
             "set_func": None,
@@ -70,7 +70,7 @@ knob_set=\
             "type": "enum",                         # int / enum
             "default": 0                            # default value
         },
-    "bloom-filter-bits-per-key":
+    "rocksdb.defaultcf.bloom-filter-bits-per-key":
         {
             "changebyyml": True,
             "set_func": None,
@@ -80,7 +80,17 @@ knob_set=\
             "type": "enum",                         # int / enum
             "default": 0                            # default value
         },
-    "optimize-filters-for-hits":
+    "rocksdb.writecf.bloom-filter-bits-per-key":
+        {
+            "changebyyml": True,
+            "set_func": None,
+            "minval": 0,                            # if type==int, indicate min possible value
+            "maxval": 0,                            # if type==int, indicate max possible value
+            "enumval": [5,10,15,20],                # if type==enum, list all valid values
+            "type": "enum",                         # int / enum
+            "default": 0                            # default value
+        },
+    "rocksdb.writecf.optimize-filters-for-hits":
         {
             "changebyyml": True,
             "set_func": None,
@@ -211,15 +221,17 @@ def load_workload(wl_type):
 
 #------------------common functions------------------
 
-def set_tikvyml(knob_name, knob_val):
+def set_tikvyml(knob_sessname, knob_val):
+    knob_sess=knob_sessname.split('.')[0:-1]
+    knob_name=knob_sessname.split('.')[-1]
     ymldir=os.path.join(ansibledir,"conf","tikv_newcfg.yml")
     tmpdir=os.path.join(ansibledir,"conf","tikv.yml")
     tmpf=open(tmpdir)
     tmpcontent=yaml.load(tmpf, Loader=yaml.RoundTripLoader)
-    if(knob_set[knob_name]['type']=='enum'):
+    if(knob_set[knob_sessname]['type']=='enum'):
         idx=knob_val
-        knob_val=knob_set[knob_name]['enumval'][idx]
-    if(knob_set[knob_name]['type']=='bool'):
+        knob_val=knob_set[knob_sessname]['enumval'][idx]
+    if(knob_set[knob_sessname]['type']=='bool'):
         if(knob_val==0):
             knob_val=False
         else:
@@ -228,11 +240,11 @@ def set_tikvyml(knob_name, knob_val):
         knob_val=str(knob_val)+"KB"
     if(knob_name=='write-buffer-size' or knob_name=='max-bytes-for-level-base' or knob_name=='target-file-size-base'):
         knob_val=str(knob_val)+"MB"
-    if(knob_name in tmpcontent['rocksdb']['defaultcf']):
-        tmpcontent['rocksdb']['defaultcf'][knob_name]=knob_val
+    if(knob_name in tmpcontent[knob_sess[0]][knob_sess[1]]):        # TODO: only support 2 level of knob_sess currently
+        tmpcontent[knob_sess[0]][knob_sess[1]][knob_name]=knob_val
     else:
         return('failed')
-    print("set_tikvyml:: ",knob_name, knob_val)
+    print("set_tikvyml:: ",knob_sessname, knob_sess, knob_name, knob_val)
     ymlf=open(ymldir, 'w')
     yaml.dump(tmpcontent, ymlf, Dumper=yaml.RoundTripDumper)
     os.popen("rm "+tmpdir+" && "+"mv "+ymldir+" "+tmpdir)

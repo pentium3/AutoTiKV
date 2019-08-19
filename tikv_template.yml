@@ -520,7 +520,7 @@ rocksdb:
     ## The SST file size of level-0 is influenced by the compaction algorithm of `write-buffer-size`
     ## and level0. `target-file-size-base` is used to control the size of a single SST file of level1 to
     ## level6.
-    target-file-size-base: 16MB
+    target-file-size-base: 8MB
 
     ## Max bytes for `compaction.max_compaction_bytes`.
     # max-compaction-bytes: "2GB"
@@ -557,7 +557,7 @@ rocksdb:
     ## This value is setted to true for `default` cf by default because its kv data could be determined
     ## whether really exists by upper logic instead of bloom filters. But we suggest to set it to false
     ## while using `Raw` mode.
-    optimize-filters-for-hits: true
+    # optimize-filters-for-hits: false
 
     disable-auto-compactions: false
 
@@ -631,7 +631,8 @@ rocksdb:
     # compaction-pri: 3
     # read-amp-bytes-per-bit: 0
     # dynamic-level-bytes: true
-    # optimize-filters-for-hits: false
+    optimize-filters-for-hits: false
+    bloom-filter-bits-per-key: 10
 
   lockcf:
     # compression-per-level: ["no", "no", "no", "no", "no", "no", "no"]
