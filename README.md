@@ -21,5 +21,7 @@ Python 3.6
 
 ```./install.sh```
 
+```sudo pip3 install -r requirements.txt```
+
 Then copy tikv_template.yml to TIDB_ANSIBLE/conf/tikv.yml
 
