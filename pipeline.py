@@ -1,13 +1,12 @@
-from controller import read_metric, read_knob, set_knob, knob_set, init_knobs, load_workload, run_workload, calc_metric
+from controller import read_metric, read_knob, set_knob, knob_set, init_knobs, load_workload, run_workload, calc_metric, restart_db
 from gpmodel import configuration_recommendation
 from datamodel import GPDataSet
-from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, wl_metrics, wltype
+from settings import tikv_ip, tikv_port, target_knob_set, target_metric_name, wl_metrics, wltype, loadtype
 import numpy as np
 import time
 
 if __name__ == '__main__':
     ds = GPDataSet()
-    knob_cache = {}
     Round=200
     init_knobs()
     metric_list=wl_metrics[wltype]
@@ -15,18 +14,21 @@ if __name__ == '__main__':
     num_knobs = len(target_knob_set)
     num_metrics = len(metric_list)
 
-    #lres = load_workload(wltype)
-    #print(lres)
 
     KEY = str(time.time())
     while(Round>0):
         print("################## start a new Round ##################")
         rec = configuration_recommendation(ds)
+        knob_cache = {}
         for x in rec.keys():
             set_knob(x, rec[x])
             knob_cache[x] = rec[x]
 
         print("Round: ", Round, rec)
+
+        restart_db()
+        lres = load_workload(loadtype)
+        print(lres)
 
         new_knob_set = np.zeros([1, num_knobs])
         new_metric_before = np.zeros([1, num_metrics])

@@ -1,6 +1,7 @@
 from gpclass import *
 
 def configuration_recommendation(target_data, runrec=None):
+    print("running configuration recommendation...")
     if(target_data.num_previousamples<10 and runrec==None):                               #  give random recommendation on several rounds at first
         return gen_random_data(target_data)
 
@@ -53,7 +54,9 @@ def configuration_recommendation(target_data, runrec=None):
 
     # Scale to N(0, 1)
     X_scaler = StandardScaler()
-    X_scaled = X_scaler.fit_transform(X_matrix)
+    X_scaler.fit(X_matrix)
+    X_scaled = X_scaler.transform(X_matrix)
+    #X_scaled = X_scaler.fit_transform(X_matrix)
     if y_target.shape[0] < 5:  # FIXME
         # FIXME (dva): if there are fewer than 5 target results so far
         # then scale the y values (metrics) using the workload's
@@ -114,7 +117,7 @@ def configuration_recommendation(target_data, runrec=None):
             col_max = X_scaled[:, i].max()
             # Set min value to the default value
             # FIXME: support multiple methods can be selected by users
-            col_min = X_default_scaled[i]
+            #col_min = X_default_scaled[i]
 
         X_min[i] = col_min
         X_max[i] = col_max
@@ -147,6 +150,9 @@ def configuration_recommendation(target_data, runrec=None):
         except queue.Empty:
             break
 
+    #X_samples=np.rint(X_samples)
+    #X_samples=X_scaler.transform(X_samples)
+
     model = GPRGD(length_scale=DEFAULT_LENGTH_SCALE,
                   magnitude=DEFAULT_MAGNITUDE,
                   max_train_size=MAX_TRAIN_SIZE,
@@ -158,16 +164,18 @@ def configuration_recommendation(target_data, runrec=None):
                   sigma_multiplier=DEFAULT_SIGMA_MULTIPLIER,
                   mu_multiplier=DEFAULT_MU_MULTIPLIER)
     model.fit(X_scaled, y_scaled, X_min, X_max, ridge=DEFAULT_RIDGE)
-    print("constrains_min::::::::", X_min)
-    print("constrains_max::::::::", X_max)
-    print("train:::::::: ", X_scaled.shape, X_scaled, type(X_scaled[0][0]))
-    print("train:::::::: ", y_scaled.shape, y_scaled, type(y_scaled[0][0]))
-    print("predict:::::::: ", X_samples.shape, X_samples, type(X_samples[0][0]))
+    # print("constrains_min::::::::", X_min)
+    # print("constrains_max::::::::", X_max)
+    # print("train:::::::: ", X_scaled.shape, X_scaled, type(X_scaled[0][0]))
+    # print("train:::::::: ", y_scaled.shape, y_scaled, type(y_scaled[0][0]))
+    print("predict:::::::: ", X_samples.shape, X_scaler.inverse_transform(X_samples).astype(np.int16), type(X_samples[0][0]))
     res = model.predict(X_samples, constraint_helper=constraint_helper)
 
     best_config_idx = np.argmin(res.minl.ravel())
     best_config = res.minl_conf[best_config_idx, :]
     best_config = X_scaler.inverse_transform(best_config)
+    print("rec:::::::", X_scaler.inverse_transform(res.minl_conf), res.minl)
+    print('best_config==', best_config_idx, best_config)
     # Decode one-hot encoding into categorical knobs
     best_config = dummy_encoder.inverse_transform(best_config)
 
@@ -181,7 +189,11 @@ def configuration_recommendation(target_data, runrec=None):
     best_config = np.minimum(best_config, X_max_inv)
     best_config = np.maximum(best_config, X_min_inv)
 
+    best_config = np.rint(best_config)
+    best_config = best_config.astype(np.int16)
+
     conf_map = {k: best_config[i] for i, k in enumerate(X_columnlabels)}
+    print(conf_map)
     return conf_map
 
 
