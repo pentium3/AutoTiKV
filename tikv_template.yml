@@ -520,7 +520,7 @@ rocksdb:
     ## The SST file size of level-0 is influenced by the compaction algorithm of `write-buffer-size`
     ## and level0. `target-file-size-base` is used to control the size of a single SST file of level1 to
     ## level6.
-    target-file-size-base: 8MB
+    target-file-size-base: 16MB
 
     ## Max bytes for `compaction.max_compaction_bytes`.
     # max-compaction-bytes: "2GB"

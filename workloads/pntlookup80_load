@@ -25,7 +25,7 @@
 # 2min each run
 
 recordcount=80000000
-operationcount=2000000
+operationcount=5000000
 workload=core
 
 readallfields=true
