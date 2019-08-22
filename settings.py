@@ -9,8 +9,8 @@ wl_metrics={
     "writeheavy":["write_throughput","write_latency","store_size","compaction_cpu"],        #UPDATE
     "pntlookup40": ["get_throughput","get_latency","store_size","compaction_cpu"],          #READ
     "pntlookup80": ["get_throughput","get_latency","store_size","compaction_cpu"],          #READ
-    "longscan":  ["write_throughput","write_latency","scan_throughput","scan_latency","store_size","compaction_cpu"],        #SCAN, INSERT
-    "shortscan": ["write_throughput","write_latency","scan_throughput","scan_latency","store_size","compaction_cpu"],        #SCAN, INSERT
+    "longscan":  ["scan_throughput","scan_latency","store_size","compaction_cpu"],        #SCAN
+    "shortscan": ["scan_throughput","scan_latency","store_size","compaction_cpu"],        #SCAN
     "smallpntlookup": ["get_throughput","get_latency","store_size","compaction_cpu"],       #READ
 }
 # workload to be load
