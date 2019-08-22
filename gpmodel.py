@@ -27,7 +27,9 @@ def configuration_recommendation(target_data, runrec=None):
 
     # Combine duplicate rows in the target/workload data (separately)
     #X_workload, y_workload, rowlabels_workload = combine_duplicate_rows(X_workload, y_workload, rowlabels_workload)
-    #X_target, y_target, rowlabels_target = combine_duplicate_rows(X_target, y_target, rowlabels_target)
+    #    print("remove duplicate: ", X_target, y_target, rowlabels_target)
+    X_target, y_target, rowlabels_target = combine_duplicate_rows(X_target, y_target, rowlabels_target)
+    #    print("remove duplicate: ", X_target, y_target, rowlabels_target)
 
     # Delete any rows that appear in both the workload data and the target
     # data from the workload data

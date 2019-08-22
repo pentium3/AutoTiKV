@@ -39,7 +39,7 @@ class GPDataSet:
         self.previous_metric_set = np.vstack((self.previous_metric_set, self.new_metric_set))
         self.previous_knob_set = np.vstack((self.previous_knob_set, self.new_knob_set))
         self.num_previousamples+=1
-        self.previous_rowlabels = [x + 1 for x in range(self.num_previousamples)]
+        self.previous_rowlabels = np.array([x + 1 for x in range(self.num_previousamples)])
         self.previous_timestamp.append(self.new_timestamp)
 
     def initdataset(self, metric_list):
@@ -50,7 +50,7 @@ class GPDataSet:
         self.knob_labels = np.array([x for x in target_knob_set])
         self.metric_labels = np.array([x for x in metric_list])
 
-        self.previous_rowlabels = [x+1 for x in range(self.num_previousamples)]
+        self.previous_rowlabels = np.array([x+1 for x in range(self.num_previousamples)])
         self.previous_timestamp = [" " for x in range(self.num_previousamples)]
         self.previous_knob_set = np.zeros([self.num_previousamples, self.num_knobs])
         self.previous_metric_set = np.zeros([self.num_previousamples, self.num_metrics])
