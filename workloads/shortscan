@@ -27,7 +27,7 @@
 # key, and then request a number of records; this works fine even for hashed insertion.
 
 recordcount=80000000
-operationcount=2000000
+operationcount=200000
 workload=core
 
 readallfields=true

@@ -29,6 +29,9 @@ if __name__ == '__main__':
         restart_db()
         lres = load_workload(loadtype)
         print(lres)
+        if("_ERROR" in lres):
+            print("load workload error")
+            exit()
 
         new_knob_set = np.zeros([1, num_knobs])
         new_metric_before = np.zeros([1, num_metrics])
@@ -42,6 +45,9 @@ if __name__ == '__main__':
 
         rres = run_workload(wltype)
         print(rres)
+        if("_ERROR" in rres):
+            print("run workload error")
+            exit()
 
         for i,x in enumerate(metric_list):
             new_metric_after[0][i] = read_metric(x, rres)
