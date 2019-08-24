@@ -27,7 +27,7 @@
 # key, and then request a number of records; this works fine even for hashed insertion.
 
 recordcount=80000000
-operationcount=500000
+operationcount=2000000
 workload=core
 
 readallfields=true
@@ -37,10 +37,10 @@ updateproportion=0
 scanproportion=1
 insertproportion=0
 
-requestdistribution=zipfian
+requestdistribution=uniform
 
 maxscanlength=100
 
-scanlengthdistribution=uniform
+scanlengthdistribution=100
 
 
