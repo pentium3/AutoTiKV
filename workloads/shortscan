@@ -39,8 +39,9 @@ insertproportion=0
 
 requestdistribution=uniform
 
+minscanlength=100
 maxscanlength=100
 
-scanlengthdistribution=100
+# scanlengthdistribution=uniform
 
 
