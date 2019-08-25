@@ -25,3 +25,8 @@ Python 3.6
 
 Then copy tikv_template.yml to TIDB_ANSIBLE/conf/tikv.yml
 
+
+### Document
+
+https://www.cnblogs.com/pdev/p/11318880.html
+
