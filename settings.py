@@ -14,9 +14,9 @@ wl_metrics={
     "smallpntlookup": ["get_throughput","get_latency","store_size","compaction_cpu"],       #READ
 }
 # workload to be load
-loadtype = "shortscan"
+loadtype = "longscan"
 # workload to be run
-wltype = "shortscan"
+wltype = "longscan"
 
 # only 1 target metric to be optimized
 target_metric_name="scan_latency"
