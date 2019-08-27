@@ -1,5 +1,5 @@
 '''
-Some code in this file is reused from OtterTune project
+Some code in this file is reused from OtterTune project under Apache License v2
 
 Copyright (c) 2017-18, Carnegie Mellon University Database Group
 
