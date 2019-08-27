@@ -1,3 +1,13 @@
+'''
+Some code in this file is reused from OtterTune project
+
+Copyright (c) 2017-18, Carnegie Mellon University Database Group
+
+@author: Bohan Zhang, Dana Van Aken
+
+'''
+
+
 from gpclass import *
 
 def configuration_recommendation(target_data, runrec=None):
